@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f7f7f5" />
+  <meta name="description" content="Econometrics Mastery — deep source-aligned theory, Vietnamese key terms, 600 fully explained practice questions, diagnostics, calculators, exam mode and empirical workflow." />
+  <meta name="color-scheme" content="light" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Econometrics Mastery" />
+  <meta property="og:description" content="OLS · Inference · Diagnostics · Bilingual key terms · 600 explained questions" />
+  <title>Econometrics Mastery</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+  <link rel="manifest" href="site.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+      svg: { fontCache: 'global' },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre','code'] }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-meta shell">
+      <span><i class="live-dot"></i>ECONOMETRICS · OLS → INFERENCE → DIAGNOSTICS</span>
+      <span class="header-meta-right">Understand the model · Check assumptions · Explain the result</span>
+    </div>
+    <div class="nav-shell shell">
+      <a class="brand" href="#dashboard" aria-label="Econometrics Mastery home">
+        <span class="brand-mark">β̂</span>
+        <span class="brand-copy"><strong>ECONOMETRICS</strong><small>MASTERY</small></span>
+      </a>
+      <nav class="top-nav" id="topNav" aria-label="Primary navigation">
+        <a href="#dashboard">Home</a>
+        <a href="#learn">Learn</a>
+        <a href="#practice">Practice</a>
+        <a href="#exam">Exam</a>
+        <a href="#formulas">Formulas</a>
+        <a href="#lab">Lab</a>
+        <a href="#menu">Tools</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="search-trigger" id="searchTrigger" aria-label="Search lessons, terms and questions" title="Search · Ctrl/⌘ K">⌕</button>
+        <button class="progress-pill" data-route="progress" aria-label="Open progress"><span id="headerProgress">0%</span><small>progress</small></button>
+        <button class="primary-pill" data-route="practice">Self-test ↗</button>
+        <button class="menu-trigger" id="menuTrigger" aria-label="Open menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="app" tabindex="-1"></main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="globalSearchDialog" class="global-search-dialog" aria-labelledby="globalSearchTitle">
+    <div class="global-search-head">
+      <div><span class="eyebrow">GLOBAL SEARCH</span><h2 id="globalSearchTitle">Find a lesson, term, formula or question</h2></div>
+      <button id="globalSearchClose" class="search-close" type="button" aria-label="Close search">ESC</button>
+    </div>
+    <label class="global-search-box">
+      <span aria-hidden="true">⌕</span>
+      <input id="globalSearchInput" type="search" autocomplete="off" placeholder="Try “OLS”, “phương sai thay đổi”, “VIF”, or “log-level”…" />
+      <kbd>⌘ K</kbd>
+    </label>
+    <div id="globalSearchResults" class="global-search-results" aria-live="polite"></div>
+  </dialog>
+
+  <div id="annotationToolbar" class="annotation-toolbar" hidden>
+    <button data-anno="highlight" data-color="yellow" title="Yellow highlight">● Yellow</button>
+    <button data-anno="highlight" data-color="green" title="Green highlight">● Green</button>
+    <button data-anno="highlight" data-color="pink" title="Pink highlight">● Pink</button>
+    <button data-anno="highlight" data-color="blue" title="Blue highlight">● Blue</button>
+    <button data-anno="comment">Comment</button>
+    <button data-anno="flashcard">Flashcard</button>
+  </div>
+
+  <dialog id="noteDialog" class="note-dialog">
+    <form method="dialog" class="note-dialog-card" id="noteForm">
+      <div class="note-dialog-head"><div><span class="eyebrow">STUDY NOTE</span><h2 id="noteDialogTitle">Add note</h2></div><button type="button" class="icon-close" data-note-close aria-label="Close note editor">×</button></div>
+      <div class="note-quote-preview"><span>Selected passage</span><blockquote id="noteQuotePreview"></blockquote></div>
+      <label class="note-field"><span>Your note</span><textarea id="noteText" rows="6" maxlength="1600" placeholder="Write the reasoning, warning, assumption or interpretation you want to remember…"></textarea></label>
+      <div class="note-dialog-options">
+        <label><span>Highlight color</span><select id="noteColor"><option value="yellow">Yellow</option><option value="green">Green</option><option value="pink">Pink</option><option value="blue">Blue</option></select></label>
+        <label class="note-check"><input id="noteHighlight" type="checkbox" checked><span>Highlight this passage in the lesson</span></label>
+      </div>
+      <div class="note-dialog-actions"><button type="button" class="text-btn" data-note-close>Cancel</button><button type="submit" class="green-btn" id="saveNoteBtn">Save note</button></div>
+    </form>
+  </dialog>
+
+  <script src="data.js"></script>
+  <script src="deep-econometrics.js"></script>
+  <script src="annotations.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
