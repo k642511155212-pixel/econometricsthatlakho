@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 760">
+<rect width="1400" height="760" fill="#f7f7f5"/>
+<path d="M760 0h640v760H610z" fill="#d8d8ee" opacity=".75"/>
+<path d="M890 0h510v760H760z" fill="#efc9c0" opacity=".62"/>
+<g opacity=".92"><path d="M795 610H1300M835 645V115" stroke="#292421" stroke-width="4" stroke-linecap="round"/>
+<path d="M865 555L1248 185" stroke="#315d33" stroke-width="9" stroke-linecap="round"/>
+<g fill="#b4553f"><circle cx="905" cy="535" r="13"/><circle cx="940" cy="468" r="11"/><circle cx="991" cy="474" r="12"/><circle cx="1028" cy="401" r="13"/><circle cx="1085" cy="380" r="10"/><circle cx="1124" cy="320" r="13"/><circle cx="1177" cy="305" r="11"/><circle cx="1210" cy="237" r="13"/></g>
+<g fill="#292421" font-family="Arial, sans-serif"><text x="1110" y="120" font-size="76" font-weight="700">β̂</text><text x="975" y="675" font-size="34">X</text><text x="790" y="155" font-size="34">Y</text><text x="1130" y="455" font-size="30">ŷ = β̂₀ + β̂₁x</text></g></g>
+<g transform="translate(700 120) rotate(-8)"><rect width="225" height="112" rx="20" fill="#f0db47"/><text x="26" y="48" font-family="Arial,sans-serif" font-size="22" font-weight="700" fill="#292421">MODEL ≠ REALITY</text><text x="26" y="78" font-family="Arial,sans-serif" font-size="17" fill="#292421">check assumptions.</text></g>
+</svg>

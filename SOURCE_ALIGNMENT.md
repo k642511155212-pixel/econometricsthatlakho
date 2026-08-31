@@ -1,39 +1,88 @@
-# Source Alignment
+# Source Alignment & Theory Audit — v2.0
 
-## Curriculum map
+Audit date: **2026-08-31**
 
-| Website module | Primary supplied source | Main coverage |
-|---|---|---|
-| 01 — Foundations of Econometrics | `1. chapter1 .pdf`; Wooldridge Ch. 1 | nature/purpose of econometrics, empirical workflow, data types, terminology, probability/statistics, causal caution |
-| 02 — Simple Linear Regression | `2. chapter2.pdf`; Gujarati Ch. 2–5 | PRF/SRF, stochastic error, OLS, assumptions, BLUE, standard errors, R² |
-| 03 — Multiple Regression | `3. chapter3.pdf`; Gujarati Ch. 7; Wooldridge multiple-regression chapters | ceteris paribus slopes, multiple OLS, assumptions, R²/adjusted R², specification bias, functional forms |
-| 04 — Statistical Inference | `4. chapter 4 Statistical Inference.pdf`; Gujarati Ch. 8 | t tests, confidence intervals, overall F, equality restrictions, restricted least squares, Chow test, functional-form testing |
-| 05 — Diagnosing Model Problems | `5. chapter 5.pdf`; Gujarati Ch. 10–12 | multicollinearity, heteroskedasticity, autocorrelation: nature → consequences → detection → remedies |
-| 06 — Exam Extensions & Empirical Lab | supplied final/test-bank materials; Gujarati/Wooldridge | logs, dummies, quadratics, interactions, centering, regression-table interpretation, Stata/EViews workflow, empirical project |
+The second pass found that the first website build did **not** cover every supplied source topic. The major missing areas were the newly added dummy-variable lecture, deeper Chapter 5 autocorrelation detail, and the theory required to support Wooldridge test-bank Chapters 5–19. These gaps are now represented by explicit lessons rather than being hidden inside generic summaries.
 
-## Key source-driven design decisions
+## 1. Core lecture alignment
 
-- The site preserves the lecture course sequence **Introduction → Simple Regression → Multiple Regression → Statistical Inference → Diagnosing Model Problems**.
-- Chapter 1's empirical project structure is represented in the Empirical Project lesson: abstract, introduction, literature review, methodology/data, results, conclusion, references and appendices.
-- Chapter 4's inference sequence is retained: individual coefficient tests, overall significance, coefficient equality, linear restrictions, parameter stability and functional form.
-- Chapter 5 is explicitly organized using the course's diagnostic logic: **nature, consequences, detection, cure/remedy**.
-- The assessment extension module adds log/dummy/quadratic/interaction interpretation because these patterns occur in the supplied exam materials and are standard continuations in Gujarati/Wooldridge.
+| Supplied source | Source structure that must be represented | Website coverage after v2 |
+| --- | --- | --- |
+| Chapter 1 — Introduction | nature/purpose of econometrics; methodology; terminology; data types; measurement/data quality; statistics review; empirical project structure | `m1` + `m6/empirical-project` |
+| Chapter 2 — Simple Linear Regression | regression/PRF; stochastic PRF; linearity in parameters; SRF/residual; OLS derivation; assumptions; unbiased/efficient properties; goodness of fit | `m2` |
+| Chapter 3 — Multiple Regression | motivation/ceteris paribus; multiple PRF/SRF; partial effects; OLS; assumptions; estimator properties; fit; specification/omitted variables | `m3` |
+| Chapter 4 — Statistical Inference | individual t; CI; one/two-tail testing; overall F; equality of coefficients; linear restrictions/RLS; stability/Chow; functional-form tests | `m4` |
+| Chapter 5 — Diagnosing Model Problems | multicollinearity; heteroskedasticity; autocorrelation — nature, consequences, detection, remedies | `m5`, with deep audit notes in `extended-theory.js` |
+| `dummy_S.pdf` | qualitative info; single dummy/base group; dummy trap; interactions; multiple categories; group-difference/Chow testing; seasonal dummies; piecewise linear regression | `m6/dummy-variables`, `m6/interactions`, `m6/dummy-multiple-categories`, `m6/seasonal-piecewise-dummies`, plus `m4/chow-test` |
 
-## Precision clarifications
+### Chapter 5 details explicitly restored
 
-Some lecture-slide rules are presented in a more precise way in the website while preserving the course principle:
+The v2 source audit adds the lecture-level distinctions that were too compressed in the first build:
 
-- **Fixed-X vs random-X framing:** classical fixed-regressor presentation is connected to the modern random-sampling/conditional-mean formulation.
-- **Fail to reject:** the website avoids the incorrect phrase “accept H₀” when evidence is insufficient.
-- **Confidence intervals:** frequentist long-run coverage is stated precisely.
-- **VIF thresholds:** `VIF > 10` and pairwise correlation cutoffs are labeled rules of thumb rather than universal laws.
-- **Durbin–Watson:** `d ≈ 2` is presented as intuition; formal bounds/conditions and the limitation with lagged dependent variables are noted.
-- **Dummy in log(Y):** exact percentage effects use `100[exp(δ)-1]%`; `100δ%` is identified as an approximation.
+- multicollinearity: perfect vs high collinearity, estimator precision, high R² with weak individual t-ratios, pairwise correlations, auxiliary regressions, VIF/tolerance, remedies and specification-bias warning;
+- heteroskedasticity: causes, OLS consequences, graphical detection, Park, Glejser, Goldfeld–Quandt, Breusch–Pagan–Godfrey, White, robust inference/WLS logic;
+- autocorrelation: AR(1) idea, Durbin–Watson assumptions and bounds/indecision, modified d logic, Breusch–Godfrey and higher-order serial correlation, model misspecification vs pure autocorrelation, respecification, GLS/FGLS and Newey–West/HAC.
 
-## Online references
+## 2. Test-bank alignment
 
-The Sources page links to:
+The uploaded **Wooldridge 5e Test Bank** contains **19 chapters × 20 questions = 380 questions**. Every item now has a valid theory destination.
 
-- Stata official regression postestimation documentation for `estat vif`, heteroskedasticity diagnostics and related postestimation.
-- Penn State STAT 501 for open regression-method and diagnostic references.
-- NIST/SEMATECH e-Handbook for general statistical diagnostic reference.
+| Test Bank chapter | Main theory destination |
+| ---: | --- |
+| 1 | `m1` Foundations |
+| 2 | `m2` Simple Linear Regression |
+| 3 | `m3` Multiple Regression |
+| 4 | `m4` Statistical Inference |
+| 5 | `m4/consistency-asymptotics`, `m4/lm-large-sample` |
+| 6 | `m3/functional-forms`, `m6/data-scaling-standardization`, `m6/prediction-residuals` |
+| 7 | `m6` dummy/multiple-category/interaction/LPM lessons |
+| 8 | `m5` heteroskedasticity + robust/WLS coverage |
+| 9 | `m3/omitted-specification`, `m6/functional-misspec-reset`, proxy/measurement-error/sample-selection lessons |
+| 10 | `m7` time-series nature, static/distributed lags, trend/seasonality |
+| 11 | `m7` stationarity, AR/MA/random walk, time-series OLS, dynamic completeness |
+| 12 | `m7` serial correlation detection/correction and time-series heteroskedasticity |
+| 13 | `m8` pooled cross sections, natural experiments, two-period panels, first differencing, clustering |
+| 14 | `m8` fixed effects, random effects, correlated random effects/Hausman, cluster inference |
+| 15 | `m9` IV, relevance/exogeneity, 2SLS, weak instruments, overidentification, endogeneity tests |
+| 16 | `m9` simultaneous equations, reduced form, simultaneity bias, identification and system 2SLS |
+| 17 | `m10` logit/probit, MLE/LR/Wald, Tobit, Poisson/count, sample selection |
+| 18 | `m7` distributed lags, unit roots, spurious regression, cointegration/ECM, forecasting |
+| 19 | `m6/empirical-project` and empirical workflow |
+
+### Test-bank question policy
+
+- All 380 items are stored separately from generated/course drills (`sourceType: test-bank`).
+- Original chapter/question number, difficulty, Bloom level and topic/A-Head are retained.
+- Every option has an explanation.
+- Every item maps to `module + lesson` so **Open linked theory** always has a real target.
+- The source key is retained in `sourceAnswer`.
+- When a clear conflict was found, `sourceAudit` explains the issue. Five keys were corrected; two more bank-specific wording/cause cautions were annotated without changing the selected answer.
+
+## 3. Supplementary textbooks and archive sources
+
+### Gujarati & Porter — Basic Econometrics, 5th ed.
+Used for fuller derivations and diagnostic details, especially multiple regression, inference, dummy variables, multicollinearity, heteroskedasticity, autocorrelation, model specification and later econometric topics.
+
+### Wooldridge — Introductory Econometrics, 3rd ed.
+Used for the modern ceteris-paribus interpretation, zero-conditional-mean logic, omitted-variable bias, asymptotics, robust inference, time series, panels, IV and limited-dependent-variable reasoning.
+
+### Stock & Watson — Introduction to Econometrics, 3rd ed.
+Present in the uploaded course archive and treated as a supplementary source for applied regression, inference, causal interpretation and empirical examples.
+
+### FTU KTEE309 project/research-method guide
+Supports the Empirical Project lesson: research question, literature review, model choice, variable definition, data source/summary statistics, OLS methodology, results, conclusion, references and appendices.
+
+### Additional archived assessments
+The archive also contains FTU/KTEE218 MCQ/revision/final-exam material. These were used as course/exam calibration sources. They do not create a new theory domain beyond the core lecture sequence. A second questions-only/mock-test PDF based on the Wooldridge bank was treated as duplicate packaging rather than counted again as a second 380-question bank.
+
+## 4. Scope controls in the app
+
+To prevent the enlarged source set from making the actual course feel unfocused:
+
+- **Core course drills** = instructor-course modules and non-test-bank practice;
+- **Wooldridge Test Bank** = all 380 supplied bank questions;
+- **Mixed** = the full 980-question pool;
+- **Core Course exam** = test generated from the core module pool;
+- **Test-bank exam** = test generated from the uploaded bank pool.
+
+This keeps source completeness and exam focus separate.

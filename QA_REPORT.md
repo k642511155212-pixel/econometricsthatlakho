@@ -1,59 +1,60 @@
-# QA Report
+# QA Report — Econometrics Mastery v2.0
 
-## Automated content validation
+Validation date: **2026-08-31**
 
-Validated with `node qa.js`:
+Automated validation is run with:
 
-- Modules: **6**
-- Lessons: **58**
-- Practice questions: **600**
-- Formula cards: **28**
-- Glossary entries: **261**
-- Section self-checks: **174**
-- Guided practice problems: **174**
-- Broken question → lesson links: **0**
-- Duplicate question IDs: **0**
-- Questions without exactly four options: **0**
-- Questions without four option-level explanations: **0**
-- Questions without a full answer explanation: **0**
-- Questions without a theory-review target: **0**
-- Lessons without deep enhancements: **0**
+```bash
+node qa.js
+```
 
-## JavaScript syntax validation
+## Final structural counts
 
-The following files pass `node --check`:
+| Check | Result |
+| --- | ---: |
+| Modules | 10 |
+| Lessons | 104 |
+| Original practice questions | 600 |
+| Uploaded Wooldridge test-bank questions | 380 |
+| **Total questions** | **980** |
+| Test-bank chapters | 19 |
+| Questions per test-bank chapter | 20 |
+| Formula cards | 28 |
+| Glossary entries | 409 |
+| Self-check prompts | 312 |
+| Guided problems | 312 |
+| Source-key corrections | 5 |
 
-- `app.js`
-- `data.js`
-- `deep-econometrics.js`
-- `annotations.js`
-- `qa.js`
+## Automated integrity checks
 
-## Question-bank composition
+PASS criteria:
 
-- Lecture / test-bank aligned: **116**
-- Exam-style variants: **192**
-- Generated source-aligned drills: **292**
-- Total: **600**
+- exactly 10 modules and 104 lessons;
+- exactly 980 questions;
+- exactly 380 test-bank questions;
+- exactly 20 test-bank questions in each Chapter 1–19;
+- no duplicate question IDs;
+- every question maps to an existing module/lesson;
+- every question has 2 or 4 answer options as appropriate;
+- every answer index is valid;
+- every option has an explanation;
+- every question has a full explanation and review target;
+- all test-bank items include chapter/Bloom/topic/provenance metadata;
+- exactly five source answer keys differ after audit;
+- all 104 lessons have an enhancement bundle with 3 deep dives and 3 guided problems;
+- all formula cards have detailed formula metadata;
+- added dummy/test-bank sources exist in the source registry;
+- `index.html` loads data/extensions/theory/test-bank files in the correct order.
 
-Generated and exam-style questions are original practice variants; they are not represented as verbatim past-exam questions.
+## Manual/source audit notes
 
-## Feature checks
+The test bank contains several internal inconsistencies. The v2 build does not silently present a clearly incorrect key as correct. The original key remains available in metadata and an on-screen **Source audit** note explains any correction.
 
-- Hash routing and GitHub Pages deployment workflow retained.
-- Search, Learn, Practice, Question Bank, Mistake Notebook, Notes & Highlights, Flashcards, Formula Sheet, Calculators, Exam Mode, Progress, Glossary, Saved, Sources, Settings and Empirical Lab routes are present.
-- Practice feedback uses `optionExplanations` when available and displays the exact linked theory lesson.
-- Exam review displays option-level reasoning and the exact linked theory lesson after submission.
-- Local-storage namespace changed to `em_` to avoid collisions with the Finance Mastery app.
-- Econometrics-specific calculator panel opens on Simple OLS slope by default.
-- All local `index.html` JS/CSS/icon references resolve.
+Two bank items are not answer-key corrections but carry caution notes:
 
-## Academic precision checks added
+- Chapter 1 sequencing: the source bank keys econometric-model specification, while the textbook narrative also stresses careful formulation of the question first.
+- Chapter 1 causal example: the bank treats income → consumption as causal; the website preserves the bank answer but reminds the learner that observational causal claims require identification, not correlation alone.
 
-- “Fail to reject H₀” wording instead of treating non-rejection as proof.
-- Frequentist confidence-interval wording clarified.
-- VIF thresholds marked as rules of thumb.
-- Durbin–Watson limitations and Breusch–Godfrey alternative noted.
-- Heteroskedasticity consequence separated into coefficient unbiasedness (under exogeneity) vs invalid conventional standard errors.
-- Exact semilog dummy percentage effect included.
-- Causal claims separated from conditional association.
+## JavaScript syntax checks
+
+The release process also runs `node --check` on every local JavaScript file.

@@ -982,3 +982,7 @@ body{
 .exam-option-review{margin-top:14px;padding:12px 0;border-top:1px solid var(--line)}
 .exam-option-review summary{cursor:pointer;font-weight:800;color:var(--green)}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:rgba(49,93,51,.08);padding:.12rem .35rem;border-radius:.3rem}
+
+/* v2 source/test-bank audit UI */
+.bank-tools.bank-tools-wrap{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}.bank-tools.bank-tools-wrap>*{min-width:150px}.bank-tools.bank-tools-wrap input{min-width:230px}.source-audit-note{margin-top:14px;padding:14px 16px;border:1px solid #e4d7ab;border-radius:14px;background:#fff9e8;color:#5d512d;font-size:.79rem;line-height:1.5}.source-audit-note strong{font-family:var(--display);color:#43391d}.source-audit-note code{background:#f3ead0;border-radius:6px;padding:2px 5px}.tb-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid #c7d9c4;background:#edf5ea;border-radius:999px;padding:4px 9px;color:var(--green);font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+@media(max-width:680px){.bank-tools.bank-tools-wrap>*{width:100%;min-width:0}.bank-tools.bank-tools-wrap input{min-width:0}}
