@@ -265,10 +265,10 @@ const App = (() => {
 
   function dashboard(){
     const s=scoreStats(); const totalLessons=D.modules.reduce((a,m)=>a+m.lessons.length,0); const checks=totalLessons*3;
-    const hero=`<section class="hero-card hero-painted">
-      <div class="hero-copy"><span class="hero-kicker">Econometrics, from intuition to inference</span><h1>ECONOMETRICS,<br><em>made easier to reason through.</em></h1><p>A deep, bilingual study space for PRF/SRF, OLS, multiple regression, statistical inference, diagnostics and exam-level functional-form interpretation.</p><div class="hero-actions"><button class="yellow-btn" data-route="learn">Begin with the course ↗</button><button class="ghost-btn" data-route="practice">Try a self-check ↗</button></div></div>
-      <div class="hero-note"><span>${totalLessons} deep lessons</span><span>${checks} section self-checks</span><span>${D.questions.length} explained practice questions</span></div>
-    </section>`;
+    const hero=`<section class="sketchbook-landing-shell" aria-label="Ruồi Lùn sketchbook landing page">
+      <iframe class="sketchbook-landing-frame" src="landing-pages/meng-to-sketchbook.html" title="Ruồi Lùn — Econometrics Sketchbook" sandbox="allow-downloads allow-forms allow-modals allow-popups allow-same-origin allow-scripts" loading="eager"></iframe>
+    </section>
+    <section class="sketchbook-study-rail shell" aria-label="Study shortcuts"><div><span class="eyebrow">RUỒI LÙN · ECONOMETRICS</span><p>${totalLessons} deep lessons · ${checks} section self-checks · ${D.questions.length} explained practice questions</p></div><div><button class="green-btn" data-route="learn">Begin with the course ↗</button><button class="outline-btn" data-route="practice">Try a self-check ↗</button></div></section>`;
     const pillars=`<section class="pillars">${[
       ['01','Understand the mechanism','Every result is tied to the population concept, estimator, assumptions and interpretation.'],
       ['02','Learn bilingually','English econometrics terms stay primary; Vietnamese translations appear beside key terminology.'],
@@ -280,7 +280,7 @@ const App = (() => {
     const modules=`<section class="soft-section"><div class="section-head"><span class="eyebrow">Learn</span><h2>Choose a module</h2><p>Each module contains deep theory, Vietnamese key terms, source clarifications, formulas, worked reasoning, self-checks and guided practice.</p></div><div class="module-showcase">${D.modules.map(m=>`<article class="module-card" data-route="learn/${m.id}"><div class="module-icon">${m.icon||'β̂'}</div><span>Module ${m.num}</span><h3>${m.title}</h3><p>${m.subtitle}</p><div class="module-card-foot"><b>${m.lessons.length} lessons</b><small>${moduleProgress(m.id)}% complete</small></div></article>`).join('')}</div></section>`;
     const stats=`<section class="stat-strip">${[[String(checks),'Section self-checks'],[String(checks),'Guided problems'],[String(D.formulas.length),'Core formulas'],[String(D.questions.length),'Practice questions']].map(x=>`<div><strong>${x[0]}</strong><span>${x[1]}</span></div>`).join('')}</section>`;
     const lower=`<section class="why-section section-space"><div class="collage-card"><div class="fake-chart"><i style="height:28%"></i><i style="height:45%"></i><i style="height:62%"></i><i style="height:81%"></i><i style="height:70%"></i></div><div class="yellow-sticker">Theory → estimator → inference → diagnostics.</div><div class="badge-round">OLS<br>β̂</div></div><div><span class="eyebrow">Why this build</span><h2>Designed around the mistakes econometrics students actually make.</h2><p>Many errors are not arithmetic errors: they come from confusing PRF with SRF, u with û, fit with causality, coefficient significance with model significance, or a diagnostic consequence with a coefficient bias. The site forces the model, assumptions and interpretation to stay connected.</p><div class="quality-row"><span>Practice questions with option-level explanation</span><b>100%</b></div><div class="quality-line"><i style="width:100%"></i></div><div class="quality-row"><span>Questions linked to theory review</span><b>100%</b></div><div class="quality-line"><i style="width:100%"></i></div></div></section>`;
-    return `<div class="home-shell shell">${hero}${pillars}${progress}</div>${modules}<div class="home-shell shell">${stats}${lower}</div>`;
+    return `${hero}<div class="home-shell shell">${pillars}${progress}</div>${modules}<div class="home-shell shell">${stats}${lower}</div>`;
   }
 
   function learnHome(){

@@ -986,3 +986,16 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background
 /* v2 source/test-bank audit UI */
 .bank-tools.bank-tools-wrap{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}.bank-tools.bank-tools-wrap>*{min-width:150px}.bank-tools.bank-tools-wrap input{min-width:230px}.source-audit-note{margin-top:14px;padding:14px 16px;border:1px solid #e4d7ab;border-radius:14px;background:#fff9e8;color:#5d512d;font-size:.79rem;line-height:1.5}.source-audit-note strong{font-family:var(--display);color:#43391d}.source-audit-note code{background:#f3ead0;border-radius:6px;padding:2px 5px}.tb-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid #c7d9c4;background:#edf5ea;border-radius:999px;padding:4px 9px;color:var(--green);font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
 @media(max-width:680px){.bank-tools.bank-tools-wrap>*{width:100%;min-width:0}.bank-tools.bank-tools-wrap input{min-width:0}}
+
+
+/* ThreeUI · Ruồi Lùn Sketchbook landing frame */
+.sketchbook-landing-shell{position:relative;width:100%;height:clamp(650px,calc(100svh - 104px),960px);overflow:hidden;background:#ece7dc;border-bottom:1px solid rgba(43,39,33,.12);isolation:isolate}
+.sketchbook-landing-frame{position:absolute;inset:0;display:block;width:100%;height:100%;border:0;background:#ece7dc}
+.sketchbook-study-rail{display:flex;align-items:center;justify-content:space-between;gap:28px;padding-top:28px;padding-bottom:4px}
+.sketchbook-study-rail p{margin:5px 0 0;color:var(--muted);font-size:.82rem}
+.sketchbook-study-rail>div:last-child{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:680px){
+  .sketchbook-landing-shell{height:620px}
+  .sketchbook-study-rail{align-items:flex-start;flex-direction:column;padding-top:20px}
+  .sketchbook-study-rail>div:last-child{justify-content:flex-start}
+}

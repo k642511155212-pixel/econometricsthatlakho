@@ -58,3 +58,13 @@ Two bank items are not answer-key corrections but carry caution notes:
 ## JavaScript syntax checks
 
 The release process also runs `node --check` on every local JavaScript file.
+
+## ThreeUI Ruồi Lùn Sketchbook integration — 2026-10-07
+
+- Integrated the authored sketchbook runtime as a same-origin iframe on the dashboard, preserving the source page's DOM/CSS/JavaScript isolation and sandbox capabilities.
+- Rebranded visible `Meng To` identity to `Ruồi Lùn`; the stable `meng-to-sketchbook` asset path is intentionally unchanged for source compatibility.
+- Reused the current site's original fly mascot assets inside the sketchbook atmosphere (`flower`, `heart`, `sideeye`).
+- Verified all 17 required ThreeUI binary assets byte-for-byte against the supplied SHA-256 hashes: **PASS**.
+- Verified local landing-page references resolve, authored interaction DOM IDs exist, page-turn/zoom/loupe/pointer handlers remain present, and both inline script blocks pass `node --check`.
+- Full project `node qa.js`: **PASS**, 0 errors.
+- Browser QA was attempted with the installed headless Chromium, but this execution environment's organization policy blocks local/file URLs before page code can run. Runtime browser interaction therefore could not be executed here; static and source-level interaction checks above passed.
