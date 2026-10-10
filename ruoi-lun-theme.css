@@ -1,0 +1,71 @@
+/* ===============================================================
+   RUỒI LÙN · ECONOMETRICS · source-verified edition
+   A clean final visual layer inspired by ESP3 Mastery.
+   No external font/image requests; preserves native MathML display.
+   =============================================================== */
+:root{
+  --cream:#efeee6; --paper:#faf9f3; --ink:#223a30; --muted:#657267;
+  --green:#263e32; --green2:#466b50; --green3:#e5ebe2;
+  --line:#d4d9cc; --accent:#476e53; --accent-dark:#263e32;
+  --accent-soft:#e7eee5; --yellow:#f5ecc0; --yellow2:#f5f3e6;
+  --display:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --shadow:0 24px 50px rgba(35,56,43,.07)
+}
+*{min-width:0}html{scroll-padding-top:98px}body{background:var(--cream);color:#22372e;font-size:15px;overflow-x:hidden}
+img,svg,video{max-width:100%}button,a,input,select,textarea{outline-offset:3px}a{color:inherit}
+.site-header{position:sticky;top:0;z-index:90;background:rgba(239,238,230,.94);border:0;backdrop-filter:blur(20px)}
+.header-meta{display:none!important}
+.nav-shell.shell{width:min(1400px,calc(100% - 36px));min-height:72px;height:auto;margin:12px auto 10px;padding:9px 15px;border:1px solid #d4daca;border-radius:999px;background:#faf9f3;box-shadow:0 8px 22px rgba(20,45,30,.04);display:flex;align-items:center;gap:20px}
+.brand{min-width:216px;flex-shrink:0;gap:11px}
+.brand-mark{width:44px;height:44px;border:1px solid #ced9cc!important;border-radius:15px;background:#f7f8ee!important;box-shadow:none!important;overflow:hidden;display:grid;place-items:center}
+.brand-mark img{width:100%;height:100%;object-fit:cover;display:block}
+.brand-copy strong{display:block;font-family:var(--font);font-size:1.15rem;line-height:1.13;letter-spacing:-.04em;text-transform:none;color:#273f32}
+.brand-copy small{display:block;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:#6f796e;margin-top:2px}
+.top-nav{gap:clamp(9px,1.35vw,24px);margin:auto}.top-nav a{color:#58655a;font-weight:700;font-size:.78rem;white-space:nowrap;text-decoration:none;transition:color .2s}.top-nav a:hover{color:#21392b}
+.nav-actions{flex-shrink:0;gap:8px}.search-trigger{width:40px;height:40px;background:#f5f6ef;border:1px solid #d7ded2;border-radius:50%;font-size:1.35rem;color:#263e32}
+.progress-pill{background:#426650;border:0;color:white;border-radius:50px;min-width:74px;padding:7px 12px}.progress-pill small{color:#d5e3d4}
+.primary-pill{display:none}.menu-trigger{color:#294435}
+.shell,.home-shell.shell{width:min(1280px,calc(100% - 48px))}
+.home-shell{padding-top:24px}
+.mascot-float-layer{display:none!important}
+.rl-hero{display:grid;grid-template-columns:minmax(0,1.74fr) minmax(320px,.9fr);gap:16px;min-height:648px;padding:18px;background:#faf9f3;border:1px solid #e5e7dc;border-radius:36px;box-shadow:var(--shadow)}
+.rl-hero-main{display:flex;flex-direction:column;position:relative;overflow:hidden;padding:37px clamp(20px,2vw,32px) 70px}
+.rl-eyebrow,.rl-index-title{font-size:.67rem;font-weight:850;letter-spacing:.16em;color:#3c624c}
+.rl-hero-tags{display:flex;flex-wrap:wrap;gap:11px;margin-top:34px;font-size:.6rem;font-weight:800;letter-spacing:.095em;color:#62715d}
+.rl-hero-tags span{padding:7px 0}.rl-hero h1{position:relative;z-index:2;max-width:760px;margin:36px 0 22px;font-family:var(--font);font-size:clamp(3rem,6.3vw,5.65rem);font-weight:760;letter-spacing:-.075em;line-height:.99;color:#253c30}
+.rl-hero h1 em{display:block;max-width:720px;margin-top:4px;font-family:'Newsreader','Georgia',serif;font-size:1.09em;font-weight:450;letter-spacing:-.055em;line-height:1;color:#4a7255}
+.rl-hero-main>p{position:relative;z-index:2;max-width:530px;margin:10px 0 0;color:#4b5f50;line-height:1.76;font-size:1rem}
+.rl-hero-actions{position:relative;z-index:2;display:flex;align-items:center;gap:20px;margin-top:28px;flex-wrap:wrap}.rl-hero-actions .green-btn{padding:15px 24px;font-weight:800;background:#263e32;border:0;border-radius:999px;box-shadow:none;color:white}.rl-hero-actions .green-btn:hover{background:#385d48}
+.rl-text-action{border:0;background:transparent;color:#294435;font-weight:760}
+.rl-hero-mascot{position:absolute;z-index:1;right:-18px;bottom:-69px;width:255px;transform:rotate(-9deg);pointer-events:none;filter:drop-shadow(0 10px 10px rgba(35,55,43,.1))}
+.rl-hero-mascot img{display:block;width:100%;height:auto}
+.rl-hero-index{display:flex;flex-direction:column;gap:0;min-width:0;padding:32px 23px 24px;border-radius:28px;background:#263d31;color:#faf9ef}
+.rl-index-title{color:#d7e9c9;margin-bottom:26px}.rl-index-row{display:grid;grid-template-columns:29px 1fr auto;align-items:center;gap:12px;padding:17px 0;text-align:left;border:0;border-bottom:1px solid rgba(240,245,235,.14);background:transparent;color:#faf9ef}.rl-index-row:hover{color:#deedc9}.rl-index-row strong{color:#d9e3b7;font-size:.75rem}.rl-index-row span{font-size:.89rem;font-weight:650}.rl-index-row small{font-size:.55rem;color:#d1e3c5;letter-spacing:.06em}.rl-index-footer{margin-top:auto;padding:27px 0 3px;border:0;background:transparent;text-align:left;color:#dceac5;font-size:.86rem;font-weight:750}
+.study-space-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.study-space{border-color:#cdd6c9;border-radius:22px}.study-space.yellow{background:#f3eed6}.study-space.blue{background:#e5eee6}.study-space.pink{background:#f1e4dd}.study-space.dark,.hub-summary,.module-review-card,.mixed-submit-foot{background:#263d31;color:#fff}.study-space h3{color:inherit}
+.course-map-nodes button,.wide-module-card,.bank-row,.formula-card,.lesson-roadmap article{background:#faf9f3;border-color:var(--line)}
+.course-map-strip,.practice-toolbar,.bank-tools,.source-warning{border-color:var(--line)}
+.page-shell.shell{padding-top:22px;padding-bottom:65px}.page-heading{margin:10px 0 30px}.page-heading h1{font-size:clamp(2.2rem,4.4vw,4.25rem);font-weight:750;color:#263e32;letter-spacing:-.06em}.page-heading p{color:#617064}.page-heading .eyebrow,.eyebrow,.block-label{color:#42694d}.page-mascot{max-width:132px}
+.question-card,.lesson-article,.bank-row,.settings-card,.term-trainer-stage,.written-stage,.formula-card{border-color:#d7dfd2;background:#fdfcf7;border-radius:21px;box-shadow:none}
+.question-card{padding:clamp(20px,4vw,40px)}.question-card h2{font-size:clamp(1.18rem,2.2vw,1.55rem);line-height:1.55;font-weight:750;letter-spacing:-.018em;color:#263e32}
+.question-card .option{border-radius:12px;white-space:normal;text-align:left;overflow-wrap:anywhere}
+.option.correct,.inline-option.correct{border-color:#528963;background:#ebf5e9}.option.wrong,.inline-option.wrong{border-color:#ba776e;background:#fff0ec}
+.answer-panel{border-radius:16px;border:1px solid #c9ddc6;background:#f0f5ed;padding:22px;margin-top:18px}
+.q-source-caption{margin:9px 0 14px!important;color:#627564;font-size:.67rem;line-height:1.6;overflow-wrap:anywhere}
+.source-warning{padding:15px 20px;margin:12px 0 23px;border:1px solid #d7cdaa;border-radius:14px;background:#faf6e7;color:#4c4e35}.source-warning summary{cursor:pointer;font-weight:800}.source-warning>div{max-height:380px;overflow-y:auto}.source-warning>div p{padding:8px 0;border-bottom:1px solid #ded6b8}
+.bank-tools,.practice-toolbar{flex-wrap:wrap;justify-content:flex-start}.bank-tools>*{max-width:100%}.bank-tools input{min-width:180px}
+.green-btn,.complete-btn,.yellow-btn{background:#42684e;border-color:#42684e;color:#fff;box-shadow:none}.green-btn:hover,.complete-btn:hover,.yellow-btn:hover{background:#294835}.outline-btn{border-color:#bacdbc;color:#294635;background:#fff}.outline-btn:hover{border-color:#4b7453;background:#e5eee3;color:#294635}
+.exam-hero{background:#263d31;color:#fff}.exam-hero h2,.exam-hero strong{color:#fff}.exam-hero .ghost-btn{color:#fff;border-color:#b5d1ba}
+/* Native MathML needs available width and must never flatten fractions / radicals. */
+.math-scroll,.formula-math,.formula-display,math[display='block']{overflow-x:auto!important;overflow-y:hidden;max-width:100%;white-space:normal;scrollbar-width:thin}
+.math-scroll{display:block;padding:24px 15px}.math-scroll math,.formula-math math{display:inline-block;width:max-content;max-width:none;min-width:max-content;font-size:1.09rem}.lesson-article,.theory-block,.formula-card,.question-card{overflow-wrap:anywhere}
+html body .term-grid{border-color:#d4dfd1;background:#eef2e9}.term-grid>div{background:#fffef8;border-color:#d9e4d7}
+::selection{background:#dce4b8;color:#213c2d}
+@media(max-width:1150px){.top-nav{gap:12px}.top-nav a{font-size:.72rem}.brand{min-width:182px}.nav-actions{gap:5px}.rl-hero h1{font-size:clamp(3.05rem,6.6vw,5.45rem)}}
+@media(max-width:950px){.top-nav{display:none}.menu-trigger{display:inline-flex}.rl-hero{grid-template-columns:1fr}.rl-hero-main{min-height:540px}.rl-hero-index{min-height:auto}.rl-index-row{grid-template-columns:30px 1fr auto}.rl-hero-mascot{right:6%;bottom:-60px;width:235px}.study-space-grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:680px){.shell,.home-shell.shell{width:calc(100% - 24px)}.nav-shell.shell{width:calc(100% - 20px);border-radius:18px;min-height:64px;margin:8px auto;padding:7px 10px}.brand-mark{width:38px;height:38px}.brand-copy{display:block!important}.brand-copy strong{font-size:.98rem}.brand-copy small{font-size:.48rem}.nav-actions .search-trigger{width:36px;height:36px}.nav-actions .progress-pill{display:none}.rl-hero{padding:9px;border-radius:23px;gap:9px;min-height:0}.rl-hero-main{padding:24px 18px 145px;min-height:610px}.rl-hero-tags{margin-top:18px;gap:8px}.rl-hero h1{font-size:clamp(2.65rem,12vw,4.3rem);margin:27px 0 19px}.rl-hero-main>p{font-size:.91rem;line-height:1.65}.rl-hero-actions{margin-top:22px;gap:10px}.rl-hero-mascot{width:176px;right:0;bottom:-35px}.rl-hero-index{border-radius:18px;padding:22px 19px}.rl-index-row{padding:15px 0}.rl-index-row span{font-size:.82rem}.rl-index-row small{font-size:.49rem}.study-space-grid{grid-template-columns:1fr}.page-shell.shell{padding-top:10px}.page-heading-side{display:none}.page-heading h1{font-size:2.3rem}.question-card{padding:18px}.practice-toolbar select{max-width:100%}.question-card h2{font-size:1.18rem}.bank-tools{display:flex;flex-direction:column;align-items:stretch}.bank-tools input,.bank-tools select{width:100%}.source-warning{padding:12px}.math-scroll math{font-size:1.01rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* Final narrow-screen overflow safeguard for question stems with long math strings. */
+.bank-row,.bank-row>div,.bank-row h3,.review-row h3,.worksheet-item h3{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:normal;white-space:normal}
+@media(max-width:680px){.bank-results,.bank-row{max-width:100%;width:100%}.bank-row{grid-template-columns:minmax(0,1fr)}.bank-row h3{word-break:break-word}}
+.q-source-caption a{display:inline-flex;margin-top:7px;font-weight:750;color:#356143;text-decoration:underline;text-underline-offset:3px}

@@ -1,58 +1,36 @@
-# QA Report — Econometrics Mastery v4.0
+# V5 QA report · Econometrics × Ruồi Lùn
 
-Validation date: **2026-09-14**
+## 1. Data/provenance checks
 
-## Verified counts
+- 10 modules and 104 existing lessons retained.
+- 600 synthetic MCQs physically removed from `data.js`.
+- 174 synthetic guided practice questions and 174 generated section checks removed from the deep-theory source.
+- 694 nonduplicate, gradable source questions remain; 16 source issues are segregated from auto-grading.
+- All active questions have supported `sourceType`, unique IDs and stems, valid answer indices/options and valid links to an existing lesson.
+- Both `node qa.js` and `node qa-v4.js` produce `errors: []`.
 
-| Check | Result |
-| --- | ---: |
-| Modules | 10 |
-| Lessons | 104 |
-| Practice questions | 980 |
-| Glossary / Term Bank entries | 409 |
-| Short-answer prompts | 312 |
-| Econometric write-up prompts | 104 |
-| Self-check prompts | 312 |
-| Guided problems | 312 |
-| Formula cards | 28 |
-| Structured fractions (`mfrac`) | 29 |
-| Structured sums with limits (`munderover`) | 6 |
-| Structured sub/superscripts | 86 |
-| Directly embedded project images | 9: hero, favicon, Donate and 6 mascots |
+## 2. Code and asset checks
 
-## Automated checks
+- JavaScript checked with `node --check`.
+- CSS parsed using `tinycss2` without syntax errors.
+- Referenced HTML stylesheets/scripts and bundled Masterbook link exist.
+- No CDN is necessary for formulas or image assets.
+- Deployment workflow is at `.github/workflows/deploy-pages.yml`.
 
-Run both suites from the project root:
+## 3. Browser behavior checks
 
-```bash
-node qa.js
-node qa-v4.js
-```
+A local, offline Playwright/Chromium harness injected the deployment HTML/CSS/JS as original bytes. Direct URL navigation was blocked by the runtime's browser policy; **the browser test is a synthetic offline page harness rather than a live GitHub Pages deployment test**.
 
-Both suites finish with `errors: []`.
+- Desktop (1440px) and mobile (390px): dashboard, practice, bank, exam, review, menu, theory and formulas loaded with no JavaScript page errors.
+- Scrolling: no horizontal viewport overflow on checked routes, including the corrected narrow-screen Question Bank.
+- Practice: selecting an answer displays feedback, enables the Next Question button and records the result to the mocked LocalStorage used by the harness.
+- Original-source exam: 30 randomized questions rendered; timer and navigation present.
+- Question Bank: Test Bank filter returns sourced questions, with flagged original items in the separate transparency drawer.
+- Theory and formula routes show native MathML; Formula Sheet yielded 28 MathML renderings during DOM inspection.
 
-`qa.js` validates the original curriculum and data integrity: IDs, answer indices, option explanations, theory links, test-bank provenance, source audits, formula metadata and enhancement bundles.
+## 4. Limits
 
-`qa-v4.js` additionally validates:
-
-- every new route renderer;
-- every module has enough terms, MCQs, short answers and write-ups for a module-scoped mixed exam;
-- the mixed paper contains 10 MCQs, 5 terms, 3 short answers and 1 write-up;
-- all 28 formula names produce non-empty, balanced native MathML;
-- fractions, summations and scripts remain semantic structures rather than flat strings;
-- MathJax/CDN references are absent;
-- hero, favicon, Donate and mascot images are directly embedded;
-- legacy `assets/` image paths and runtime image-file references are absent;
-- every script loaded by `index.html` exists;
-- v4 CSS contains the formula, Module Hub, trainer, Review Hub, mixed-exam and Donate layout systems.
-
-## Responsive safeguards
-
-- Every formula is wrapped in a dedicated `.math-scroll` region with `overflow-x: auto`.
-- Formula cards and all new grids collapse at 1000 px, 760 px and 430 px breakpoints.
-- Mixed-exam controls remain sticky and compact on small screens.
-- Images use embedded `data:` URLs and cannot fail because of repository-relative image paths.
-
-## Browser compatibility
-
-The release targets current Chrome/Edge, Firefox and Safari versions with native MathML support. No network connection is required after the repository files load.
+- No real GitHub-hosted browser smoke test has been run. Verify site after pushing to GitHub Pages.
+- Original source answers outside the manual source-key corrections have not all received independent line-by-line mathematical auditing.
+- LocalStorage behavior was tested with a compatible in-memory mock due the sandbox page's opaque origin; persistent cross-session storage needs a normal hosted browser origin.
+- Extra advanced lecture modules remain intentionally; exam scope is documented separately.
