@@ -1,65 +1,35 @@
-# Econometrics Mastery v2.0
+# Econometrics Mastery v4.0
 
-A GitHub Pages-ready static learning web app for the supplied FTU Econometrics materials. The v2 build was re-audited against the lecture slides, supplementary textbooks/course archive, the added dummy-variable lecture, and the uploaded Wooldridge test bank.
+A GitHub Pages-ready, bilingual Econometrics learning website. This release keeps the original academic curriculum and its source hierarchy while adding the connected study workflow and playful visual language developed for ESP3 Mastery.
 
-## What is included
+## Academic content retained
 
-- **10 modules / 104 theory lessons**.
-  - **Core Course:** Foundations, Simple Regression, Multiple Regression, Statistical Inference, Diagnosing Model Problems, and course/exam extensions.
-  - **Extended Econometrics:** Time Series; Pooled Cross Sections & Panel Data; Endogeneity/IV/Simultaneous Equations; Limited Dependent Variables.
-- English-first theory with **Vietnamese translations for key terms** inline and in a bilingual glossary (**409 entries**).
-- **980 practice questions total**:
-  - 600 course/source-aligned drills from the original build;
-  - **380 questions from the supplied Wooldridge 5e Test Bank, Chapters 1–19**.
-- Every question contains:
-  - a correct answer,
-  - a full explanation,
-  - an explanation for **every option** (why correct / why wrong),
-  - an exact theory lesson to review.
-- Test-bank metadata is preserved where available: **chapter, source question number, difficulty, Bloom level, A-Head/topic, source key and feedback provenance**.
-- **Source-audit notes** are shown when a supplied test-bank key/wording conflicts with the underlying econometric concept. Five answer keys required correction; two additional items carry caution notes without changing the bank answer.
-- **312 section self-checks** and **312 guided problems** (3 of each per lesson).
-- Formula sheet with 28 formula cards and MathJax rendering.
-- Econometrics calculators: OLS, residuals, R² / adjusted R², t, CI, overall F, restricted F, VIF/tolerance, LM=nR², Durbin–Watson intuition, quadratic effects, exact semilog effects, correlation.
-- Timed exam mode, source-aware question bank, mistake notebook, progress analytics, global search, saved items, flashcards, notes/highlights, local annotation, and settings.
-- Empirical Lab with regression-output reading, functional-form interpretation and a course-aligned Stata workflow.
-- No backend. Progress and annotations are stored in browser `localStorage`.
+- 10 modules and 104 deep theory lessons.
+- 980 explained multiple-choice questions: 600 course-aligned drills plus 380 integrated Wooldridge 5e test-bank questions.
+- 312 section self-checks and 312 guided problems.
+- 409 bilingual glossary entries.
+- 28 core equations and 16 Econometrics calculators.
+- Source-audit notes, option-level explanations, exact theory links, Empirical Lab, annotations, saved items, Mistake Notebook and SRS flashcards.
 
-## Source policy and scope
+## New in v4
 
-The site uses a **lecture-first** hierarchy for the actual course sequence:
+- **Module Hub:** roadmap, terms, practice paths, guided problems and review plan for every module.
+- **Bilingual Term Bank:** English/Vietnamese search, module/type filters and mastery tracking.
+- **Focused Term Flashcards:** one-card mode, module decks, shuffle and review/mastered states.
+- **Free-text Terminology Trainer:** answer from a definition before seeing the optional word bank.
+- **Short-answer Trainer:** 312 course-linked prompts with an 80-word target and hidden guided answers.
+- **Econometric Write-up Bank:** 104 interpretation/diagnostic prompts with a 120–180 word target.
+- **Review Hub:** no-timer worksheets for terms, MCQ, short answers and write-ups, selectable by module.
+- **Mixed Exam:** 45-minute assessment with 10 MCQs, 5 terminology items, 3 short answers and 1 empirical write-up. Objective marks are automatic; written marks use transparent rubrics.
+- Expanded dashboard, course map, study-space cards, Donate page, progress analytics and responsive layouts.
 
-1. `1. chapter1 .pdf` — Introduction to Econometrics
-2. `2. chapter2.pdf` — Simple Linear Regression
-3. `3. chapter3.pdf` — Multiple Regression
-4. `4. chapter 4 Statistical Inference.pdf` — Statistical Inference
-5. `5. chapter 5.pdf` — Diagnosing Model Problems
-6. `dummy_S.pdf` — Dummy Variable Regression Models
+## Formula and image reliability
 
-The following supplied sources are used to deepen or extend the theory and practice:
-
-- Gujarati & Porter — `Basic econometrics 5th edition.pdf`
-- Wooldridge — `Introductory_Econometrics_3ed[1]-2.pdf`
-- Stock & Watson — `Stock and Watson (3e).pdf` from the uploaded course archive
-- FTU KTEE309 project/research-method guide from the uploaded archive
-- `Copy of TEST BANK (1).pdf` — Wooldridge 5e test bank, 19 chapters × 20 questions
-- supplied final-exam/revision materials in the uploaded archives
-
-The **Core Course** filter keeps study focused on the instructor's Chapters 1–5 plus dummy/exam extensions. The extended modules exist so that all supplied test-bank questions can link to a real theory lesson instead of pointing to missing content.
-
-The uploaded copyrighted PDFs are **not redistributed** inside this repository. The site stores source-aligned explanatory content and the user-supplied test-bank question data needed for the requested private study tool.
-
-## Test-bank audit
-
-The supplied bank contains 380 chapter questions. During integration, clear internal/source conflicts were checked rather than copied blindly. Examples include:
-
-- nonexperimental data → **observational data**;
-- OLS unbiasedness → **zero conditional mean**, not homoskedasticity;
-- a source answer line that conflicts with its own feedback;
-- weak-instrument vs multicollinearity logic in 2SLS;
-- standard normal CDF → **probit**, not logit.
-
-The original bank key remains visible in the item's metadata/audit note when a correction was necessary.
+- Equations use **browser-native MathML**. Fractions, sums with limits, subscripts, superscripts and radicals remain structured mathematical elements instead of flattened text.
+- Formula cards include definitions, use cases, warnings and a copyable notation fallback.
+- Long formulas have their own horizontal scroll region on small screens, so the page itself does not overflow.
+- The formula system has no MathJax/CDN/network dependency.
+- Hero art, favicon, Donate QR and all six mascot variants are embedded directly as `data:` URLs. No runtime image path or external image host is required.
 
 ## Run locally
 
@@ -67,31 +37,35 @@ The original bank key remains visible in the item's metadata/audit note when a c
 python -m http.server 8000
 ```
 
-Then open `http://localhost:8000`.
+Open `http://localhost:8000`.
 
-## Deploy on GitHub Pages
+## Deploy to GitHub Pages
 
-1. Create a new GitHub repository.
-2. Upload the contents of this folder to the repository root.
-3. Push to the `main` branch.
-4. In **Settings → Pages**, set the source to **GitHub Actions**.
-5. The included `.github/workflows/deploy-pages.yml` deploys the site automatically.
+1. Create a GitHub repository.
+2. Upload **the contents of this folder** to the repository root.
+3. Commit and push to the `main` branch.
+4. In **Settings → Pages**, choose **GitHub Actions** as the source.
+5. The included `.github/workflows/deploy-pages.yml` workflow publishes the static site.
+
+No build step, backend, package installation or environment variable is required.
 
 ## Main files
 
-- `index.html` — app shell and script load order
-- `styles.css` — responsive UI
-- `data.js` — original 6-module curriculum, formulas, glossary, sources, 600 questions
-- `source-extensions.js` — source-audit curriculum additions, 4 extended modules and bilingual glossary expansion
-- `deep-econometrics.js` — deep theory for the original curriculum
-- `extended-theory.js` — deep dives, guided problems and source clarifications for the added lessons
-- `testbank-data.js` — 380 integrated test-bank questions with metadata and source-audit notes
-- `app.js` — routing and all study tools
-- `annotations.js` — highlights and notes
-- `SOURCE_ALIGNMENT.md` — curriculum/source audit map
-- `QA_REPORT.md` — automated validation report
-- `qa.js` — structural QA script
+- `index.html` — application shell and load order.
+- `styles.css` — responsive UI and native-formula layout.
+- `embedded-assets.js` — directly embedded hero, favicon and Donate image.
+- `app.js` — routing, learning tools, native MathML renderer and local persistence.
+- `data.js`, `source-extensions.js`, `deep-econometrics.js`, `extended-theory.js`, `testbank-data.js` — curriculum and question data.
+- `annotations.js` — highlights and notes.
+- `qa.js` — original curriculum/data integrity suite.
+- `qa-v4.js` — v4 route, assessment, embedded-image and formula-structure suite.
+- `QA_REPORT.md` — verified release counts and checks.
+- `SOURCE_ALIGNMENT.md` — curriculum/source audit map.
+
+## Local data
+
+Progress, mastery, attempts, written drafts, annotations and active mixed-exam state are stored in the browser's `localStorage`. They never require a server.
 
 ## Academic-use note
 
-Generated practice items are source-aligned drills, not claims that they appeared verbatim in an official exam. Test-bank items are labeled separately from generated/course drills. The instructor's current syllabus and official announcements remain authoritative.
+Generated practice items are source-aligned drills, not claims that they appeared verbatim in an official exam. Test-bank items are labeled separately. The instructor's current syllabus and official announcements remain authoritative.

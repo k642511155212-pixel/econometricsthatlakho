@@ -14,6 +14,14 @@ const App = (() => {
     flashcards: LS.get('em_flashcards', []),
     reviews: LS.get('em_flash_reviews', {}),
     selfChecks: LS.get('em_self_checks', {}),
+    termMastery: LS.get('em_term_mastery', {}),
+    termTrainer: LS.get('em_term_trainer', {module:'',index:0,answer:'',checked:false,correct:false,attempted:0,correctTotal:0,shuffleKey:0}),
+    termCards: LS.get('em_term_cards', {module:'',index:0,flipped:false,shuffleKey:0}),
+    shortTrainer: LS.get('em_short_trainer', {module:'',index:0,answer:'',revealed:false}),
+    writeupTrainer: LS.get('em_writeup_trainer', {module:'',index:0,answer:'',revealed:false}),
+    reviewPrefs: LS.get('em_review_prefs', {module:'',type:'overview'}),
+    mixedExam: LS.get('em_mixed_exam', null),
+    mixedExamHistory: LS.get('em_mixed_exam_history', []),
     settings: LS.get('em_settings', {fontScale:100,compact:false}),
     practice: {pool:[], index:0, answered:false},
     exam: null,
@@ -41,16 +49,57 @@ const App = (() => {
   function persist(){
     LS.set('em_attempts',state.attempts); LS.set('em_completed',state.completed); LS.set('em_mistakes',state.mistakes);
     LS.set('em_saved',state.saved); LS.set('em_flashcards',state.flashcards); LS.set('em_flash_reviews',state.reviews); LS.set('em_self_checks',state.selfChecks); LS.set('em_settings',state.settings);
+    LS.set('em_term_mastery',state.termMastery); LS.set('em_term_trainer',state.termTrainer); LS.set('em_term_cards',state.termCards);
+    LS.set('em_short_trainer',state.shortTrainer); LS.set('em_writeup_trainer',state.writeupTrainer);
+    LS.set('em_review_prefs',state.reviewPrefs);
+    LS.set('em_mixed_exam',state.mixedExam); LS.set('em_mixed_exam_history',state.mixedExamHistory);
   }
   function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1800); }
   function esc(s=''){ return String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
-  function mathBlock(latex=''){ return `<div class="math-display" data-latex="${esc(latex)}">\\[${latex}\\]</div>`; }
-  function typesetMath(root=app){
-    if(!root)return;
-    const run=()=>window.MathJax?.typesetPromise ? window.MathJax.typesetPromise([root]).catch(()=>{}) : null;
-    if(window.MathJax?.typesetPromise) run();
-    else window.addEventListener('load',run,{once:true});
+  function nativeFormula(name=''){
+    const i=x=>`<mi>${esc(x)}</mi>`, n=x=>`<mn>${esc(x)}</mn>`, o=x=>`<mo>${esc(x)}</mo>`, t=x=>`<mtext>${esc(x)}</mtext>`;
+    const r=(...x)=>`<mrow>${x.join('')}</mrow>`, sub=(a,b)=>`<msub>${a}${b}</msub>`, sup=(a,b)=>`<msup>${a}${b}</msup>`, f=(a,b)=>`<mfrac>${a}${b}</mfrac>`;
+    const over=(a,b)=>`<mover accent="true">${a}${b}</mover>`, sqrt=a=>`<msqrt>${a}</msqrt>`, sum=(lo='',hi='')=>lo||hi?`<munderover>${o('∑')}${lo}${hi}</munderover>`:o('∑');
+    const beta=j=>sub(over(i('β'),o('ˆ')),j), uhat=j=>sub(over(i('u'),o('ˆ')),j), xbar=over(i('X'),o('¯')), ybar=over(i('Y'),o('¯'));
+    const xi=sub(i('X'),i('i')), yi=sub(i('Y'),i('i')), idx=r(i('i'),o('='),n('1'));
+    const rss=s=>sub(t('RSS'),i(s)), tss=t('TSS'), ess=t('ESS');
+    const map={
+      'Sample mean':r(xbar,o('='),f(n('1'),i('n')),sum(idx,i('n')),xi),
+      'Sample variance':r(sup(sub(i('s'),i('X')),n('2')),o('='),f(n('1'),r(i('n'),o('−'),n('1'))),sum(idx,i('n')),sup(r(o('('),xi,o('−'),xbar,o(')')),n('2'))),
+      'Sample covariance':r(sub(i('s'),r(i('X'),i('Y'))),o('='),f(n('1'),r(i('n'),o('−'),n('1'))),sum(idx,i('n')),r(o('('),xi,o('−'),xbar,o(')'),o('('),yi,o('−'),ybar,o(')'))),
+      'Sample correlation':r(sub(i('r'),r(i('X'),i('Y'))),o('='),f(sub(i('s'),r(i('X'),i('Y'))),r(sub(i('s'),i('X')),sub(i('s'),i('Y'))))),
+      'Simple regression PRF':r(i('E'),o('('),yi,o('|'),xi,o(')'),o('='),sub(i('β'),n('1')),o('+'),sub(i('β'),n('2')),xi),
+      'Multiple regression PRF':r(i('E'),o('('),yi,o('|'),sub(i('X'),r(n('2'),i('i'))),o(','),o('…'),o(','),sub(i('X'),r(i('k'),i('i'))),o(')'),o('='),sub(i('β'),n('1')),o('+'),sub(i('β'),n('2')),sub(i('X'),r(n('2'),i('i'))),o('+'),o('⋯'),o('+'),sub(i('β'),i('k')),sub(i('X'),r(i('k'),i('i')))),
+      'Residual':r(uhat(i('i')),o('='),yi,o('−'),sub(over(i('Y'),o('ˆ')),i('i'))),
+      'Residual Sum of Squares':r(t('RSS'),o('='),sum(idx,i('n')),sup(uhat(i('i')),n('2'))),
+      'Simple OLS slope':r(beta(n('2')),o('='),f(r(sum(),o('('),xi,o('−'),xbar,o(')'),o('('),yi,o('−'),ybar,o(')')),r(sum(),sup(r(o('('),xi,o('−'),xbar,o(')')),n('2'))))),
+      'Simple OLS intercept':r(beta(n('1')),o('='),ybar,o('−'),beta(n('2')),xbar),
+      'Multiple OLS matrix':r(over(i('β'),o('ˆ')),o('='),sup(r(sup(i('X'),o('′')),i('X')),r(o('−'),n('1'))),sup(i('X'),o('′')),i('Y')),
+      'R-squared':r(sup(i('R'),n('2')),o('='),n('1'),o('−'),f(t('RSS'),tss),o('='),f(ess,tss)),
+      'Adjusted R-squared':r(sup(over(i('R'),o('¯')),n('2')),o('='),n('1'),o('−'),f(f(t('RSS'),r(i('n'),o('−'),i('k'))),f(tss,r(i('n'),o('−'),n('1'))))),
+      'Error variance estimator':r(sup(over(i('σ'),o('ˆ')),n('2')),o('='),f(t('RSS'),r(i('n'),o('−'),i('k')))),
+      'Simple slope standard error':r(t('se'),o('('),beta(n('2')),o(')'),o('='),f(over(i('σ'),o('ˆ')),sqrt(r(sum(),sup(r(o('('),xi,o('−'),xbar,o(')')),n('2')))))),
+      't statistic':r(i('t'),o('='),f(r(beta(i('j')),o('−'),sub(i('β'),r(i('j'),o(','),n('0')))),r(t('se'),o('('),beta(i('j')),o(')')))),
+      'Confidence interval':r(beta(i('j')),o('±'),sub(i('t'),r(f(i('α'),n('2')),o(','),i('n'),o('−'),i('k'))),t('se'),o('('),beta(i('j')),o(')')),
+      'Overall F from R-squared':r(i('F'),o('='),f(f(sup(i('R'),n('2')),r(i('k'),o('−'),n('1'))),f(r(n('1'),o('−'),sup(i('R'),n('2'))),r(i('n'),o('−'),i('k'))))),
+      'Restricted F test':r(i('F'),o('='),f(f(r(rss('R'),o('−'),rss('UR')),i('m')),f(rss('UR'),r(i('n'),o('−'),i('k'))))),
+      'Chow F test':r(i('F'),o('='),f(f(r(rss('P'),o('−'),o('['),rss('1'),o('+'),rss('2'),o(']')),i('k')),f(r(rss('1'),o('+'),rss('2')),r(sub(i('n'),n('1')),o('+'),sub(i('n'),n('2')),o('−'),n('2'),i('k'))))),
+      'VIF':r(sub(t('VIF'),i('j')),o('='),f(n('1'),r(n('1'),o('−'),sup(sub(i('R'),i('j')),n('2'))))),
+      'Tolerance':r(sub(t('TOL'),i('j')),o('='),n('1'),o('−'),sup(sub(i('R'),i('j')),n('2')),o('='),f(n('1'),sub(t('VIF'),i('j')))),
+      'LM nR-squared':r(t('LM'),o('='),i('n'),sub(sup(i('R'),n('2')),t('aux')),over(o('∼'),i('a')),sub(sup(i('χ'),n('2')),i('q'))),
+      'Durbin-Watson':r(i('d'),o('='),f(r(sum(r(i('t'),o('='),n('2')),i('n')),sup(r(o('('),uhat(i('t')),o('−'),uhat(r(i('t'),o('−'),n('1'))),o(')')),n('2'))),r(sum(r(i('t'),o('='),n('1')),i('n')),sup(uhat(i('t')),n('2'))))),
+      'Approximate rho from DW':r(over(i('ρ'),o('ˆ')),o('≈'),n('1'),o('−'),f(i('d'),n('2'))),
+      'Quadratic marginal effect':r(f(r(o('∂'),i('E'),o('('),i('Y'),o('|'),i('X'),o(')')),r(o('∂'),i('X'))),o('='),sub(i('β'),n('1')),o('+'),n('2'),sub(i('β'),n('2')),i('X')),
+      'Quadratic turning point':r(sup(i('X'),o('*')),o('='),o('−'),f(sub(i('β'),n('1')),r(n('2'),sub(i('β'),n('2'))))),
+      'Exact semilog percentage':r(o('%'),o('Δ'),i('Y'),o('='),n('100'),o('['),sup(i('e'),r(i('δ'),o('Δ'),i('X'))),o('−'),n('1'),o(']'))
+    };
+    return map[name]||'';
   }
+  function mathBlock(latex='',name=''){
+    const native=nativeFormula(name);
+    return `<div class="math-display structured-math" data-formula-name="${esc(name)}"><div class="math-scroll">${native?`<math display="block" aria-label="${esc(name||latex)}">${native}</math>`:`<span class="formula-readable-fallback">${esc(latex)}</span>`}</div><details class="formula-copy"><summary>Copy formula notation</summary><code>${esc(latex)}</code></details></div>`;
+  }
+  function typesetMath(){ /* Formulas use browser-native MathML; no external renderer is required. */ }
   function lessonEnhancement(mid,lid){ return D.lessonEnhancements?.[`${mid}/${lid}`] || null; }
   function formulaDetail(name){ return D.formulaDetails?.[name] || null; }
   function formulaPanel(name,compact=false){
@@ -61,7 +110,7 @@ const App = (() => {
     const variables=d?.variables || [];
     return `<article class="lesson-formula-card ${compact?'compact-formula':''}">
       <div class="formula-card-head"><span>FORMULA</span><h3>${esc(name)}</h3></div>
-      ${mathBlock(latex)}
+      ${mathBlock(latex,name)}
       ${variables.length?`<div class="formula-variables">${variables.map(v=>`<div><b>${esc(v[0])}</b><span>${esc(v[1])}</span></div>`).join('')}</div>`:''}
       ${d?.useWhen?`<div class="formula-guidance"><b>Use when</b><p>${esc(d.useWhen)}</p></div>`:''}
       ${d?.trap?`<div class="formula-trap"><b>Exam trap</b><p>${esc(d.trap)}</p></div>`:''}
@@ -186,6 +235,66 @@ const App = (() => {
   function mod(id){ return D.modules.find(m=>m.id===id); }
   function lesson(mid,lid){ return mod(mid)?.lessons.find(l=>l.id===lid); }
   function qById(id){ return D.questions.find(q=>q.id===id); }
+  function wordCount(value=''){ return String(value).trim()?String(value).trim().split(/\s+/).length:0; }
+  function answerNorm(value=''){
+    return String(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9α-ω]+/g,' ').trim().replace(/\s+/g,' ');
+  }
+  function acceptedTermAnswer(value,item){ return [item.term,...(item.accept||[])].some(x=>answerNorm(x)===answerNorm(value)); }
+  function moduleOptions(selected='',allLabel='All modules'){
+    return `<option value="" ${!selected?'selected':''}>${allLabel}</option>${D.modules.map(m=>`<option value="${m.id}" ${selected===m.id?'selected':''}>${m.num} · ${esc(m.title)}</option>`).join('')}`;
+  }
+  function categoryForTerm(term=''){
+    const x=term.toLowerCase();
+    if(/test|statistic|critical|p-value|confidence|hypothesis|significance/.test(x))return 'INFERENCE / TEST';
+    if(/assumption|exogeneity|homoskedastic|conditional mean|normality/.test(x))return 'ASSUMPTION';
+    if(/heteroskedastic|autocorrelation|serial correlation|multicollinear|vif|durbin|breusch|white|glejser|goldfeld/.test(x))return 'DIAGNOSTIC';
+    if(/estimator|least squares|coefficient|slope|intercept|residual|fitted/.test(x))return 'ESTIMATION';
+    if(/panel|cross section|time series|data|sample|population|variable/.test(x))return 'DATA / DESIGN';
+    if(/logit|probit|tobit|instrument|2sls|simultaneous/.test(x))return 'ADVANCED MODEL';
+    return 'CORE TERM';
+  }
+  let cachedTerms=null;
+  function termCatalog(){
+    if(cachedTerms)return cachedTerms;
+    const meta=new Map();
+    D.modules.forEach(m=>m.lessons.forEach(l=>{
+      const enh=lessonEnhancement(m.id,l.id);
+      [...(l.terms||[]),...(enh?.termsExtra||[])].forEach(pair=>{
+        const key=searchNorm(pair[0]).trim(), row=meta.get(key)||{vi:'',modules:new Set(),lessons:new Set()};
+        if(pair[1]&&!row.vi)row.vi=pair[1];row.modules.add(m.id);row.lessons.add(`${m.id}/${l.id}`);meta.set(key,row);
+      });
+    }));
+    cachedTerms=Object.entries(D.glossary||{}).sort((a,b)=>a[0].localeCompare(b[0])).map(([term,definition],index)=>{
+      const row=meta.get(searchNorm(term).trim())||{vi:'',modules:new Set(),lessons:new Set()};
+      const paren=[...(term.matchAll(/\(([^)]+)\)/g))].map(x=>x[1]).filter(Boolean);
+      const base=term.replace(/\s*\([^)]*\)/g,'').trim();
+      const acronym=term.split(/\s+/).filter(x=>/^[A-Za-z]/.test(x)).map(x=>x[0]).join('').toUpperCase();
+      const accept=[base,...paren];if(acronym.length>=2&&acronym.length<=8)accept.push(acronym);
+      return {id:`T${String(index+1).padStart(3,'0')}`,term,definition,vi:row.vi||'—',modules:[...row.modules],lessons:[...row.lessons],category:categoryForTerm(term),accept:[...new Set(accept.filter(x=>answerNorm(x)!==answerNorm(term)))]};
+    });
+    return cachedTerms;
+  }
+  function termsForModule(mid=''){ const rows=termCatalog();return mid?rows.filter(x=>x.modules.includes(mid)):rows; }
+  let cachedShorts=null;
+  function shortAnswerBank(){
+    if(cachedShorts)return cachedShorts;
+    const rows=[];
+    D.modules.forEach(m=>m.lessons.forEach(l=>{
+      const key=`${m.id}/${l.id}`,enh=lessonEnhancement(m.id,l.id),answers=D.sectionAnswers?.[key]||[];
+      (enh?.deepDive||[]).forEach((s,index)=>{if(s.check)rows.push({id:`SA-${m.id}-${l.id}-${index+1}`,module:m.id,lesson:l.id,title:l.title,prompt:s.check,answer:answers[index]||s.answer||(s.paragraphs||[]).at(-1)||l.keyPrinciple,points:(s.bullets||[]).slice(0,4)});});
+    }));
+    cachedShorts=rows;return rows;
+  }
+  let cachedWriteups=null;
+  function writeupBank(){
+    if(cachedWriteups)return cachedWriteups;
+    cachedWriteups=D.modules.flatMap(m=>m.lessons.map(l=>({id:`WR-${m.id}-${l.id}`,module:m.id,lesson:l.id,title:l.title,prompt:`Explain ${l.title} and show how it should be used or interpreted in an econometric analysis.`,thesis:l.keyPrinciple,outline:[l.objective,...(l.explanation||[]).slice(0,2),l.examFocus].filter(Boolean),mistakes:(l.commonMistakes||[]).slice(0,3)})));
+    return cachedWriteups;
+  }
+  function deterministicShuffle(rows,key=0){
+    const score=value=>{let h=2166136261;for(const ch of `${value}:${key}`){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;};
+    return [...rows].sort((a,b)=>score(a.id)-score(b.id));
+  }
   function routeParts(){ return location.hash.replace(/^#/,'').split('/').filter(Boolean); }
   function nav(route){ location.hash = route.startsWith('#')?route:'#'+route; }
   function randomize(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
@@ -260,27 +369,37 @@ const App = (() => {
     const node=document.getElementById('headerProgress');
     if(!node)return;
     const total=D.modules.reduce((sum,m)=>sum+m.lessons.length,0);
-    node.textContent=`${Math.round((state.completed.length/total)*100)||0}%`;
+    const terms=termCatalog(),mastered=terms.filter(x=>state.termMastery[x.id]==='mastered').length;
+    const lessonPct=total?state.completed.length/total:0,termPct=terms.length?mastered/terms.length:0;
+    node.textContent=`${Math.round((lessonPct*.7+termPct*.3)*100)||0}%`;
   }
 
   function dashboard(){
     const s=scoreStats(); const totalLessons=D.modules.reduce((a,m)=>a+m.lessons.length,0); const checks=totalLessons*3;
-    const hero=`<section class="sketchbook-landing-shell" aria-label="Ruồi Lùn sketchbook landing page">
-      <iframe class="sketchbook-landing-frame" src="landing-pages/meng-to-sketchbook.html" title="Ruồi Lùn — Econometrics Sketchbook" sandbox="allow-downloads allow-forms allow-modals allow-popups allow-same-origin allow-scripts" loading="eager"></iframe>
-    </section>
-    <section class="sketchbook-study-rail shell" aria-label="Study shortcuts"><div><span class="eyebrow">RUỒI LÙN · ECONOMETRICS</span><p>${totalLessons} deep lessons · ${checks} section self-checks · ${D.questions.length} explained practice questions</p></div><div><button class="green-btn" data-route="learn">Begin with the course ↗</button><button class="outline-btn" data-route="practice">Try a self-check ↗</button></div></section>`;
+    const hero=`<section class="hero-card hero-painted">
+      <div class="hero-copy"><span class="hero-kicker">Econometrics, from intuition to inference</span><h1>ECONOMETRICS,<br><em>made easier to reason through.</em></h1><p>A deep, bilingual study space for PRF/SRF, OLS, multiple regression, statistical inference, diagnostics and exam-level functional-form interpretation.</p><div class="hero-actions"><button class="yellow-btn" data-route="learn">Begin with the course ↗</button><button class="ghost-btn" data-route="practice">Try a self-check ↗</button></div></div>
+      <div class="hero-note"><span>${totalLessons} deep lessons</span><span>${checks} section self-checks</span><span>${D.questions.length} explained practice questions</span></div>
+    </section>`;
     const pillars=`<section class="pillars">${[
       ['01','Understand the mechanism','Every result is tied to the population concept, estimator, assumptions and interpretation.'],
       ['02','Learn bilingually','English econometrics terms stay primary; Vietnamese translations appear beside key terminology.'],
       ['03','Diagnose every mistake','Every practice option explains why it is right or wrong and links back to the exact lesson.'],
       ['04','Work like an empirical researcher','Regression tables, diagnostics, Stata/EViews workflow and exam extensions sit in the same system.']
     ].map(x=>`<article><span>${x[0]}</span><h3>${x[1]}</h3><p>${x[2]}</p></article>`).join('')}</section>`;
-    const progress=`<section class="editorial-grid section-space"><div class="editorial-copy"><span class="eyebrow">Your course map</span><h2>Six modules. One connected econometric workflow.</h2><p>The structure follows the supplied course sources: foundations → simple regression → multiple regression → statistical inference → diagnosing model problems → exam extensions & empirical workflow.</p><div class="inline-checks"><span>✓ ${s.completed}/${totalLessons} lessons complete</span><span>✓ ${s.accuracy}% practice accuracy</span><span>✓ ${state.mistakes.length} active mistakes</span></div><button class="green-btn" data-route="progress">View progress ↗</button></div>
+    const spaces=`<section class="home-spaces"><div class="section-head"><span class="eyebrow">Choose how to study</span><h2>Four focused spaces, one connected course.</h2><p>Move from learning to retrieval, written explanation and timed assessment without losing the module context.</p></div><div class="study-space-grid">${[
+      ['01','Module Hub','Theory, terms, practice and guided problems organised module by module.','hub/m1/overview','yellow'],
+      ['02','Review Hub','Build a no-timer worksheet by module and response type.','review','blue'],
+      ['03','Term Trainer','Recall terminology from definitions without multiple-choice cues.','term-trainer','pink'],
+      ['04','Mixed Exam','MCQ, terms, short answers and empirical writing in 45 minutes.','mixed-exam','dark']
+    ].map(x=>`<article class="study-space ${x[4]}"><span>${x[0]}</span><h3>${x[1]}</h3><p>${x[2]}</p><button data-route="${x[3]}">Enter space →</button></article>`).join('')}</div></section>`;
+    const courseMap=`<section class="course-map-strip"><div><span class="eyebrow">Course architecture</span><h2>Ten modules. One econometric workflow.</h2></div><div class="course-map-nodes">${D.modules.map(m=>`<button data-route="hub/${m.id}/overview"><b>${m.num}</b><span>${esc(m.title)}</span><i style="--p:${moduleProgress(m.id)}%"></i></button>`).join('')}</div></section>`;
+    const progress=`<section class="editorial-grid section-space"><div class="editorial-copy"><span class="eyebrow">Your course map</span><h2>Learn the model, retrieve the rule, explain the result.</h2><p>The structure follows the supplied course sources: foundations → regression → inference → diagnostics → functional forms → empirical workflow.</p><div class="inline-checks"><span>✓ ${s.completed}/${totalLessons} lessons complete</span><span>✓ ${s.accuracy}% practice accuracy</span><span>✓ ${termCatalog().filter(x=>state.termMastery[x.id]==='mastered').length}/${termCatalog().length} terms mastered</span></div><button class="green-btn" data-route="progress">View progress ↗</button></div>
       <div class="metric-card"><span>Study progress</span><strong>${Math.round(s.completed/totalLessons*100)||0}%</strong><p>Completion is based on lessons you explicitly mark complete.</p><div class="mini-bars">${D.modules.map(m=>`<div><b>${m.num}</b><i><u style="width:${moduleProgress(m.id)}%"></u></i><small>${moduleProgress(m.id)}%</small></div>`).join('')}</div></div></section>`;
     const modules=`<section class="soft-section"><div class="section-head"><span class="eyebrow">Learn</span><h2>Choose a module</h2><p>Each module contains deep theory, Vietnamese key terms, source clarifications, formulas, worked reasoning, self-checks and guided practice.</p></div><div class="module-showcase">${D.modules.map(m=>`<article class="module-card" data-route="learn/${m.id}"><div class="module-icon">${m.icon||'β̂'}</div><span>Module ${m.num}</span><h3>${m.title}</h3><p>${m.subtitle}</p><div class="module-card-foot"><b>${m.lessons.length} lessons</b><small>${moduleProgress(m.id)}% complete</small></div></article>`).join('')}</div></section>`;
     const stats=`<section class="stat-strip">${[[String(checks),'Section self-checks'],[String(checks),'Guided problems'],[String(D.formulas.length),'Core formulas'],[String(D.questions.length),'Practice questions']].map(x=>`<div><strong>${x[0]}</strong><span>${x[1]}</span></div>`).join('')}</section>`;
     const lower=`<section class="why-section section-space"><div class="collage-card"><div class="fake-chart"><i style="height:28%"></i><i style="height:45%"></i><i style="height:62%"></i><i style="height:81%"></i><i style="height:70%"></i></div><div class="yellow-sticker">Theory → estimator → inference → diagnostics.</div><div class="badge-round">OLS<br>β̂</div></div><div><span class="eyebrow">Why this build</span><h2>Designed around the mistakes econometrics students actually make.</h2><p>Many errors are not arithmetic errors: they come from confusing PRF with SRF, u with û, fit with causality, coefficient significance with model significance, or a diagnostic consequence with a coefficient bias. The site forces the model, assumptions and interpretation to stay connected.</p><div class="quality-row"><span>Practice questions with option-level explanation</span><b>100%</b></div><div class="quality-line"><i style="width:100%"></i></div><div class="quality-row"><span>Questions linked to theory review</span><b>100%</b></div><div class="quality-line"><i style="width:100%"></i></div></div></section>`;
-    return `${hero}<div class="home-shell shell">${pillars}${progress}</div>${modules}<div class="home-shell shell">${stats}${lower}</div>`;
+    const donate=`<section class="donate-strip"><img src="${window.EM_EMBEDDED_ASSETS?.donate||MASCOTS.heart}" alt="Watercolour mascot holding a heart"><div><span>KEEP LEARNING OPEN</span><h2>Enjoying the study space?</h2><p>If it helps your Econometrics journey, you can open the optional support page. The course remains fully available either way.</p></div><button data-route="donate">Donate / Support ↗</button></section>`;
+    return `<div class="home-shell shell">${hero}${spaces}${courseMap}${pillars}${progress}</div>${modules}<div class="home-shell shell">${stats}${lower}${donate}</div>`;
   }
 
   function learnHome(){
@@ -513,7 +632,7 @@ const App = (() => {
     return shell(`<div class="formula-search"><input id="formulaSearch" placeholder="Search formula, category or variable…"></div><div id="formulaGrid" class="formula-grid rich-formula-grid">${D.formulas.map(f=>{
       const d=formulaDetail(f[0]);
       const search=[...f,...(d?.variables||[]).flat(),d?.useWhen||'',d?.trap||''].join(' ').toLowerCase();
-      return `<article class="formula-card rich-formula-card" data-search="${esc(search)}"><div class="formula-card-top"><span>${esc(f[3])}</span><small>${d?'TYPESET EQUATION':'FORMULA'}</small></div><h3>${esc(f[0])}</h3>${mathBlock(d?.latex||f[1])}${d?.variables?.length?`<div class="formula-variables compact-vars">${d.variables.map(v=>`<div><b>${esc(v[0])}</b><span>${esc(v[1])}</span></div>`).join('')}</div>`:''}<div class="formula-meaning"><b>Use when</b><p>${esc(d?.useWhen||f[2])}</p></div>${d?.trap?`<div class="formula-trap mini-trap"><b>Watch out</b><p>${esc(d.trap)}</p></div>`:''}</article>`;
+      return `<article class="formula-card rich-formula-card" data-search="${esc(search)}"><div class="formula-card-top"><span>${esc(f[3])}</span><small>${d?'NATIVE MATHML':'FORMULA'}</small></div><h3>${esc(f[0])}</h3>${mathBlock(d?.latex||f[1],f[0])}${d?.variables?.length?`<div class="formula-variables compact-vars">${d.variables.map(v=>`<div><b>${esc(v[0])}</b><span>${esc(v[1])}</span></div>`).join('')}</div>`:''}<div class="formula-meaning"><b>Use when</b><p>${esc(d?.useWhen||f[2])}</p></div>${d?.trap?`<div class="formula-trap mini-trap"><b>Watch out</b><p>${esc(d.trap)}</p></div>`:''}</article>`;
     }).join('')}</div>`,{eyebrow:`${D.formulas.length} core equations`,title:'Formula Sheet',lead:'Every equation is visually typeset and paired with variable definitions, decision context and exam traps—not shown as a raw code string.'});
   }
 
@@ -557,12 +676,72 @@ const App = (() => {
   function submitExam(){ if(!state.exam?.active)return; clearInterval(timerHandle); const ex=state.exam; const qs=ex.ids.map(qById); const correct=qs.filter(q=>ex.answers[q.id]===q.answer).length; const breakdown=D.modules.map(m=>{const mq=qs.filter(q=>q.module===m.id); const c=mq.filter(q=>ex.answers[q.id]===q.answer).length; return {m,total:mq.length,correct:c};}); ex.active=false; ex.result={correct,breakdown,questions:qs}; render(); }
   function examResult(){ const r=state.exam?.result;if(!r)return examHome(); return shell(`<div class="score-hero"><span>Final score</span><strong>${r.correct}/20</strong><h2>${Math.round(r.correct/20*100)}%</h2><button class="green-btn" id="newExam">New exam</button></div><div class="breakdown-grid">${r.breakdown.filter(x=>x.total).map(x=>`<div><span>${x.m.num}</span><h3>${esc(x.m.title)}</h3><strong>${x.correct}/${x.total}</strong></div>`).join('')}</div><div class="review-list">${r.questions.map(q=>{const a=state.exam.answers[q.id];return `<article class="review-row ${a===q.answer?'correct':'wrong'}"><span>${q.id}</span><div><h3>${esc(q.question)}</h3><p>Your answer: ${a===undefined?'Not answered':esc(q.options[a])}</p><p><b>Correct:</b> ${esc(q.options[q.answer])}</p><p>${esc(q.explanation)}</p><details class="exam-option-review"><summary>Why each option?</summary>${q.options.map((o,i)=>`<div class="answer-breakdown-row ${i===q.answer?'correct':''}"><b>${String.fromCharCode(65+i)}</b><p><strong>${esc(o)}</strong><br>${esc(distractorExplanation(q,i))}</p></div>`).join('')}</details>${q.sourceAudit?`<div class="source-audit-note"><b>Source audit</b><p>${esc(q.sourceAudit)}</p>${q.sourceAnswer?`<small>Original bank key: ${esc(q.sourceAnswer)}</small>`:''}</div>`:''}<div class="q-meta">Review theory: ${esc(mod(q.module)?.title||q.module)} · ${esc(lesson(q.module,q.lesson)?.title||q.lesson)}</div><button class="outline-btn" data-route="learn/${q.module}/${q.lesson}">Open theory ↗</button></div></article>`}).join('')}</div>`,{eyebrow:'Exam complete',title:'Review the reasoning',lead:'Every exam item now exposes the option-level reasoning and the exact lesson to revisit.'}); }
 
+  function mixedScopeModules(scope){
+    if(scope==='all')return D.modules.map(m=>m.id);
+    if(scope==='core')return D.courseScope?.coreModules||D.modules.slice(0,6).map(m=>m.id);
+    return mod(scope)?[scope]:D.modules.map(m=>m.id);
+  }
+  function mixedPool(scope,source){const ids=mixedScopeModules(scope);return source.filter(x=>x.module?ids.includes(x.module):(x.modules||[]).some(id=>ids.includes(id)));}
+  function beginMixedExam(scope='core'){
+    const mcqs=randomize(mixedPool(scope,D.questions)).slice(0,10);
+    const terms=randomize(mixedPool(scope,termCatalog())).slice(0,5);
+    const shorts=randomize(mixedPool(scope,shortAnswerBank())).slice(0,3);
+    const writeup=randomize(mixedPool(scope,writeupBank()))[0];
+    if(mcqs.length<10||terms.length<5||shorts.length<3||!writeup){showToast('This scope does not contain enough assessment items.');return;}
+    const startedAt=Date.now();
+    state.mixedExam={active:true,submitted:false,scope,startedAt,endAt:startedAt+45*60*1000,mcqIds:mcqs.map(x=>x.id),termIds:terms.map(x=>x.id),shortIds:shorts.map(x=>x.id),writeupId:writeup.id,answers:{mcq:{},terms:['','','','',''],shorts:['','',''],writeup:''}};
+    persist();render();
+  }
+  function mixedSeconds(){return Math.max(0,Math.ceil(((state.mixedExam?.endAt||Date.now())-Date.now())/1000));}
+  let mixedTimerHandle=null;
+  function startMixedTimer(){
+    clearInterval(mixedTimerHandle);if(!state.mixedExam?.active)return;
+    mixedTimerHandle=setInterval(()=>{const left=mixedSeconds(),node=document.getElementById('mixedTimer');if(node)node.textContent=formatTime(left);if(left<=0){clearInterval(mixedTimerHandle);submitMixedExam(true);}},1000);
+  }
+  function mixedExamSetup(){
+    const options=`<option value="core">Core course modules</option><option value="all">All 10 modules</option>${D.modules.map(m=>`<option value="${m.id}">Module ${m.num} · ${esc(m.title)}</option>`).join('')}`;
+    const history=state.mixedExamHistory||[];
+    return shell(`<section class="mixed-exam-intro"><div><span>FULL-SKILL ASSESSMENT</span><h2>19 tasks · 45 minutes</h2><p>This paper tests recognition, terminology production, compact reasoning and empirical interpretation in one continuous attempt.</p><label>Assessment scope<select id="mixedScope">${options}</select></label><button class="yellow-btn" data-start-mixed>Start mixed exam ↗</button></div><div class="exam-composition">${[['10','MCQ','4 marks'],['5','Terms','2 marks'],['3','Short answers','2 marks'],['1','Write-up','2 marks']].map(x=>`<article><strong>${x[0]}</strong><h3>${x[1]}</h3><span>${x[2]}</span></article>`).join('')}</div></section><div class="integrity-note"><b>Scoring:</b> MCQ and terminology receive automatic marks. Written responses are compared with a transparent rubric after submission; you assign their marks honestly.</div>${history.length?`<section class="attempt-history"><h2>Recent attempts</h2>${history.slice(0,5).map(x=>`<article><span>${new Date(x.at).toLocaleDateString()}</span><b>${x.objective}/6 objective marks</b><small>${esc(x.scopeLabel)}</small></article>`).join('')}</section>`:''}`,{eyebrow:'Timed mixed exam',title:'From equations to written interpretation',lead:'A course-shaped assessment—not just another multiple-choice quiz. Answers are saved locally throughout the attempt.'});
+  }
+  function mixedExamPaper(){
+    const ex=state.mixedExam,mcqs=ex.mcqIds.map(qById).filter(Boolean),terms=ex.termIds.map(id=>termCatalog().find(x=>x.id===id)).filter(Boolean),shorts=ex.shortIds.map(id=>shortAnswerBank().find(x=>x.id===id)).filter(Boolean),writeup=writeupBank().find(x=>x.id===ex.writeupId);
+    return shell(`<div class="mixed-exam-bar"><div><span>TIME REMAINING</span><strong id="mixedTimer">${formatTime(mixedSeconds())}</strong></div><div><span>SCOPE</span><b>${ex.scope==='all'?'All modules':ex.scope==='core'?'Core course':`Module ${mod(ex.scope)?.num}`}</b></div><button class="outline-btn" data-submit-mixed>Submit exam</button></div><section class="exam-section"><header><span>SECTION A</span><h2>Multiple-choice reasoning</h2><b>10 × 0.4 = 4 marks</b></header>${mcqs.map((q,i)=>`<article class="mixed-question"><small>${i+1}. ${q.id} · Module ${mod(q.module)?.num}</small><h3>${esc(q.question)}</h3><div class="mixed-options">${q.options.map((o,j)=>`<label><input type="radio" name="mixed-${q.id}" data-mixed-mcq="${q.id}" value="${j}" ${ex.answers.mcq[q.id]===j?'checked':''}><span><b>${String.fromCharCode(65+j)}</b>${esc(o)}</span></label>`).join('')}</div></article>`).join('')}</section><section class="exam-section"><header><span>SECTION B</span><h2>Terminology production</h2><b>5 × 0.4 = 2 marks</b></header>${terms.map((x,i)=>`<article class="mixed-written"><small>${i+1}. ${esc(x.category)} · ${x.modules.length?x.modules.map(id=>`M${mod(id)?.num}`).join(' · '):'Full course'}</small><h3>${esc(x.definition)}</h3><input data-mixed-term="${i}" value="${esc(ex.answers.terms[i]||'')}" placeholder="Write the exact econometrics term…"></article>`).join('')}</section><section class="exam-section"><header><span>SECTION C</span><h2>Short-answer reasoning</h2><b>3 answers · 2 marks total</b></header>${shorts.map((x,i)=>`<article class="mixed-written"><small>${i+1}. Module ${mod(x.module)?.num} · target ≤ 80 words</small><h3>${esc(x.prompt)}</h3><textarea rows="6" data-mixed-short="${i}" placeholder="State the rule, mechanism and conclusion…">${esc(ex.answers.shorts[i]||'')}</textarea></article>`).join('')}</section><section class="exam-section"><header><span>SECTION D</span><h2>Empirical write-up</h2><b>1 response · 2 marks</b></header><article class="mixed-written"><small>Target 120–180 words</small><h3>${esc(writeup?.prompt||'')}</h3><textarea rows="11" id="mixedWriteup" placeholder="Concept → mechanism → interpretation → limitation…">${esc(ex.answers.writeup||'')}</textarea></article></section><div class="mixed-submit-foot"><p>Review every section before submitting. Explanations and rubrics appear only after submission.</p><button class="green-btn" data-submit-mixed>Submit mixed exam ↗</button></div>`,{eyebrow:'Assessment in progress',title:'Econometrics mixed paper',lead:'Your responses are stored in this browser as you type. Formula structure remains available only through your own knowledge during this timed attempt.'});
+  }
+  function submitMixedExam(auto=false){
+    const ex=state.mixedExam;if(!ex?.active)return;
+    if(!auto&&!confirm('Submit this mixed exam now? You will not be able to edit the answers afterward.'))return;
+    clearInterval(mixedTimerHandle);
+    const mcqs=ex.mcqIds.map(qById).filter(Boolean),terms=ex.termIds.map(id=>termCatalog().find(x=>x.id===id)).filter(Boolean);
+    const mcqCorrect=mcqs.filter(q=>ex.answers.mcq[q.id]===q.answer).length;
+    const termCorrect=terms.filter((x,i)=>acceptedTermAnswer(ex.answers.terms[i],x)).length;
+    const objective=Number((mcqCorrect*.4+termCorrect*.4).toFixed(1));
+    ex.active=false;ex.submitted=true;ex.submittedAt=Date.now();ex.result={mcqCorrect,termCorrect,objective,auto};
+    const scopeLabel=ex.scope==='all'?'All modules':ex.scope==='core'?'Core course':`Module ${mod(ex.scope)?.num}`;
+    state.mixedExamHistory=[{at:ex.submittedAt,scope:ex.scope,scopeLabel,objective},...(state.mixedExamHistory||[])].slice(0,10);persist();render();
+  }
+  function mixedExamResult(){
+    const ex=state.mixedExam,r=ex?.result;if(!r)return mixedExamSetup();
+    const mcqs=ex.mcqIds.map(qById).filter(Boolean),terms=ex.termIds.map(id=>termCatalog().find(x=>x.id===id)).filter(Boolean),shorts=ex.shortIds.map(id=>shortAnswerBank().find(x=>x.id===id)).filter(Boolean),writeup=writeupBank().find(x=>x.id===ex.writeupId);
+    return shell(`<section class="mixed-result-hero"><span>OBJECTIVE SCORE</span><strong>${r.objective}<small>/ 6</small></strong><p>${r.mcqCorrect}/10 MCQ correct · ${r.termCorrect}/5 terms correct${r.auto?' · submitted when time expired':''}</p><div class="self-score"><b>Add your written marks after comparing the transparent rubrics below:</b><span>Short answers / 2</span><span>Write-up / 2</span></div><button class="green-btn" data-new-mixed>New mixed exam</button></section><section class="result-section"><header><span>SECTION A</span><h2>MCQ review</h2></header>${mcqs.map((q,i)=>{const a=ex.answers.mcq[q.id],correct=a===q.answer;return `<article class="mixed-review ${correct?'correct':'wrong'}"><span>${i+1}</span><div><h3>${esc(q.question)}</h3><p><b>Your answer:</b> ${a===undefined?'Not answered':esc(q.options[a])}</p><p><b>Correct answer:</b> ${esc(q.options[q.answer])}</p><p>${esc(q.explanation)}</p><button class="text-btn" data-route="learn/${q.module}/${q.lesson}">Review linked theory →</button></div></article>`}).join('')}</section><section class="result-section"><header><span>SECTION B</span><h2>Terminology review</h2></header>${terms.map((x,i)=>{const correct=acceptedTermAnswer(ex.answers.terms[i],x);return `<article class="mixed-review ${correct?'correct':'wrong'}"><span>${i+1}</span><div><h3>${esc(x.definition)}</h3><p><b>Your answer:</b> ${esc(ex.answers.terms[i]||'Not answered')}</p><p><b>Accepted term:</b> ${esc(x.term)} · ${esc(x.vi)}</p></div></article>`}).join('')}</section><section class="result-section"><header><span>SECTION C</span><h2>Short-answer self-assessment</h2><b>Allocate 2 marks across 3 answers</b></header>${shorts.map((x,i)=>`<article class="written-compare"><div><small>YOUR RESPONSE · ${wordCount(ex.answers.shorts[i])} WORDS</small><p>${esc(ex.answers.shorts[i]||'Not answered')}</p></div><div><small>GUIDED ANSWER</small><p>${esc(x.answer)}</p>${x.points.length?`<ul>${x.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`:''}</div></article>`).join('')}</section><section class="result-section"><header><span>SECTION D</span><h2>Write-up self-assessment</h2><b>2 marks</b></header><article class="written-compare"><div><small>YOUR RESPONSE · ${wordCount(ex.answers.writeup)} WORDS</small><p>${esc(ex.answers.writeup||'Not answered')}</p></div><div><small>EXPECTED STRUCTURE</small><h3>${esc(writeup?.thesis||'')}</h3><ol>${(writeup?.outline||[]).map(p=>`<li>${esc(p)}</li>`).join('')}</ol></div></article><div class="rubric-grid">${[['2.0','Accurate concept, mechanism, application and limitation'],['1.5','Mostly accurate; one element underdeveloped'],['1.0','Some correct reasoning but material omission'],['0–0.5','Major conceptual error or insufficient response']].map(x=>`<div><strong>${x[0]}</strong><p>${x[1]}</p></div>`).join('')}</div></section>`,{eyebrow:'Mixed exam complete',title:'Score the reasoning, not just the recall',lead:'Objective items are graded automatically. Written work uses explicit model guidance so partial marks remain honest and transparent.'});
+  }
 
-  function progress(){ const s=scoreStats(); return shell(`<div class="analytics-hero"><div><span>Practice accuracy</span><strong>${s.accuracy}%</strong><small>${s.correct} correct / ${s.total} attempts</small></div><div><span>Lessons complete</span><strong>${s.completed}</strong><small>of ${D.modules.reduce((a,m)=>a+m.lessons.length,0)}</small></div><div><span>Mistakes</span><strong>${state.mistakes.length}</strong><small>active review queue</small></div></div><div class="analytics-table">${D.modules.map(m=>`<article><span>${m.num}</span><div><h3>${esc(m.title)}</h3><div class="progress-line"><i style="width:${moduleProgress(m.id)}%"></i></div></div><strong>${moduleProgress(m.id)}%</strong><small>${moduleAccuracy(m.id)}% accuracy</small></article>`).join('')}</div>`,{eyebrow:'Progress & Analytics',title:'Measure what you can retrieve',lead:'Analytics use your actual local attempts and explicit lesson completion.'}); }
+
+  function progress(){
+    const s=scoreStats(),terms=termCatalog(),mastered=terms.filter(x=>state.termMastery[x.id]==='mastered').length,history=state.mixedExamHistory||[];
+    return shell(`<div class="analytics-hero expanded"><div><span>Practice accuracy</span><strong>${s.accuracy}%</strong><small>${s.correct} correct / ${s.total} attempts</small></div><div><span>Lessons complete</span><strong>${s.completed}</strong><small>of ${D.modules.reduce((a,m)=>a+m.lessons.length,0)}</small></div><div><span>Terms mastered</span><strong>${mastered}</strong><small>of ${terms.length}</small></div><div><span>Mistakes</span><strong>${state.mistakes.length}</strong><small>active review queue</small></div></div><div class="analytics-table rich-analytics">${D.modules.map(m=>{const mt=termsForModule(m.id),mm=mt.filter(x=>state.termMastery[x.id]==='mastered').length;return `<article><span>${m.num}</span><div><h3>${esc(m.title)}</h3><div class="progress-line"><i style="width:${moduleProgress(m.id)}%"></i></div></div><strong>${moduleProgress(m.id)}%</strong><small>${moduleAccuracy(m.id)}% accuracy · ${mm}/${mt.length} terms</small><button class="text-btn" data-route="hub/${m.id}/overview">Open hub →</button></article>`}).join('')}</div>${history.length?`<section class="progress-history"><span class="eyebrow">Mixed exam history</span>${history.map(x=>`<article><b>${x.objective}/6</b><span>${esc(x.scopeLabel)}</span><small>${new Date(x.at).toLocaleString()}</small></article>`).join('')}</section>`:''}`,{eyebrow:'Progress & Analytics',title:'Measure what you can retrieve',lead:'Analytics combine lesson completion, real practice attempts, terminology mastery and mixed-exam performance stored locally in this browser.'});
+  }
   function glossary(){
-    const viMap={};D.modules.forEach(m=>m.lessons.forEach(l=>{const enh=lessonEnhancement(m.id,l.id);[...(l.terms||[]),...(enh?.termsExtra||[])].forEach(t=>{if(!viMap[searchNorm(t[0])])viMap[searchNorm(t[0])]=t[1];});}));
-    const rows=Object.entries(D.glossary).sort((a,b)=>a[0].localeCompare(b[0]));
-    return shell(`<div class="glossary-grid">${rows.map(([k,v])=>`<article><span>${esc(k.charAt(0))}</span><h3>${esc(k)}</h3>${viMap[searchNorm(k)]?`<p class="glossary-vi"><b>Tiếng Việt</b> · ${esc(viMap[searchNorm(k)])}</p>`:''}<p>${esc(v)}</p></article>`).join('')}</div>`,{eyebrow:'Key terminology · Vietnamese support',title:'Bilingual glossary',lead:'English remains the teaching language. Vietnamese equivalents sit beside the term so you can recognize the concept precisely without replacing the English definition.'});
+    const rows=termCatalog(), mastered=rows.filter(x=>state.termMastery[x.id]==='mastered').length;
+    const categories=[...new Set(rows.map(x=>x.category))].sort();
+    const tools=`<section class="term-bank-tools"><label><span>Search</span><input id="termSearch" type="search" placeholder="Try OLS, phương sai, VIF…"></label><label><span>Module</span><select id="termModule">${moduleOptions()}</select></label><label><span>Type</span><select id="termCategory"><option value="">All types</option>${categories.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><div class="term-bank-actions"><button class="outline-btn" data-route="term-cards">Focus flashcards</button><button class="green-btn" data-route="term-trainer">Free-text recall</button></div></section>`;
+    const summary=`<div class="term-bank-summary"><div><strong>${rows.length}</strong><span>total terms</span></div><div><strong>${mastered}</strong><span>mastered</span></div><div><strong id="termMatchCount">${rows.length}</strong><span>matching now</span></div></div>`;
+    const cards=`<div class="glossary-grid enhanced-glossary" id="termGrid">${rows.map(row=>{const status=state.termMastery[row.id]||'new';return `<article data-term-row data-search="${esc(searchNorm(`${row.term} ${row.definition} ${row.vi}`))}" data-modules="${esc(row.modules.join(','))}" data-category="${esc(row.category)}"><div class="term-card-meta"><span>${esc(row.category)}</span><small>${row.modules.length?row.modules.map(id=>`M${mod(id)?.num}`).join(' · '):'FULL COURSE'}</small></div><h3>${esc(row.term)}</h3><p class="glossary-vi"><b>Tiếng Việt</b> · ${esc(row.vi)}</p><p>${esc(row.definition)}</p><button class="term-status ${status}" data-term-status="${row.id}" aria-label="Change mastery status for ${esc(row.term)}">${status==='mastered'?'✓ Mastered':status==='review'?'↻ Review':'○ New'}</button></article>`;}).join('')}</div>`;
+    return shell(`${tools}${summary}${cards}`,{eyebrow:`${rows.length} key terms · module filters · mastery tracking`,title:'Bilingual Term Bank',lead:'Search English or Vietnamese, filter by module and concept type, then move directly into focused retrieval practice.'});
+  }
+  function renderGlossaryResults(){
+    const query=searchNorm(document.getElementById('termSearch')?.value||''),mid=document.getElementById('termModule')?.value||'',category=document.getElementById('termCategory')?.value||'';let count=0;
+    document.querySelectorAll('[data-term-row]').forEach(row=>{const show=(!query||row.dataset.search.includes(query))&&(!mid||(row.dataset.modules||'').split(',').includes(mid))&&(!category||row.dataset.category===category);row.hidden=!show;if(show)count++;});
+    const out=document.getElementById('termMatchCount');if(out)out.textContent=count;
   }
   function saved(){ const rows=state.saved.map(s=>{ if(s.type==='question'){const q=qById(s.id);return q&&{title:q.question,sub:`Question ${q.id}`,route:`practice/${q.module}/${q.lesson}`,type:'Question'};} const [mid,lid]=s.id.split('/'),l=lesson(mid,lid); return l&&{title:l.title,sub:mod(mid).title,route:`learn/${mid}/${lid}`,type:'Lesson'};}).filter(Boolean); return shell(rows.length?`<div class="saved-list">${rows.map(r=>`<article><span>${r.type}</span><div><h3>${esc(r.title)}</h3><p>${esc(r.sub)}</p></div><button class="outline-btn" data-route="${r.route}">Open ↗</button></article>`).join('')}</div>`:`<div class="empty-state"><h2>Nothing saved yet.</h2><p>Use the ☆ icon on lessons and questions.</p></div>`,{eyebrow:'Bookmarks',title:'Saved'}); }
   function sources(){ return shell(`<div class="source-list">${D.sources.map((s,i)=>`<article><span>${String(i+1).padStart(2,'0')}</span><div><small>${esc(s.type)}</small><h3>${s.url?`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)} ↗</a>`:esc(s.name)}</h3><p>${esc(s.coverage)}</p></div></article>`).join('')}</div><div class="source-note"><b>Editorial rule:</b> the supplied lecture slides, textbooks, test bank and final-exam materials define the course frame. Reputable online references are used to clarify diagnostics/software practice, not to silently replace the course terminology or tested principles.</div>`,{eyebrow:'Grounding',title:'Sources',lead:'Primary course files first; reputable official/open references second.'}); }
@@ -577,8 +756,94 @@ const App = (() => {
     return shell(`<section class="theory-block"><span class="block-label">EMPIRICAL WORKFLOW</span><h2>From research question to a defensible regression result</h2><div class="deep-copy">${['1. State the research question and expected economic relationship.','2. Define Y, X variables, units, data structure and source.','3. Specify the econometric model and explain the error term.','4. Estimate OLS and interpret coefficients in the correct functional form.','5. Test individual/joint hypotheses and report uncertainty.','6. Diagnose multicollinearity, heteroskedasticity, autocorrelation and functional form as relevant.','7. Apply a justified remedy or robust inference, then re-interpret.','8. Conclude with economic significance, limitations and causal caution.'].map((x,i)=>`<div class="explanation-paragraph"><span>${String(i+1).padStart(2,'0')}</span><p>${esc(x)}</p></div>`).join('')}</div></section><section class="theory-block"><span class="block-label">INTERPRETATION MATRIX</span><h2>Functional forms</h2><div class="source-list">${rows.map(r=>`<article><span>${esc(r[0])}</span><div><h3>${esc(r[1])}</h3><p>${esc(r[2])}</p></div></article>`).join('')}</div></section><section class="theory-block"><span class="block-label">STATA CHECKLIST</span><h2>Course-aligned command map</h2><p><code>regress y x1 x2</code> estimates OLS. After a suitable linear regression, use postestimation tools such as <code>estat vif</code> for VIF, <code>estat hettest</code> for heteroskedasticity diagnostics, and—when the time-series model meets the required conditions—<code>estat dwatson</code> or <code>estat bgodfrey</code> for serial-correlation diagnostics. The command does not replace knowing the null hypothesis and assumptions.</p></section>`,{eyebrow:'Applied econometrics',title:'Empirical Lab',lead:'A compact bridge from course theory to regression-table interpretation and reproducible software workflow.'});
   }
 
+  function moduleHub(parts){
+    const mid=parts[1]&&mod(parts[1])?parts[1]:D.modules[0].id, tab=parts[2]||'overview',m=mod(mid);
+    const terms=termsForModule(mid),questions=D.questions.filter(q=>q.module===mid),shorts=shortAnswerBank().filter(x=>x.module===mid),writeups=writeupBank().filter(x=>x.module===mid);
+    const tabs=[['overview','Roadmap'],['terms','Key terms'],['practice','Practice paths'],['problems','Guided problems'],['review','Module review']];
+    let content='';
+    if(tab==='overview')content=`<section class="hub-summary"><div><span>MODULE ${m.num}</span><h2>${esc(m.title)}</h2><p>${esc(m.subtitle)}</p></div><div class="hub-metrics"><b>${m.lessons.length}<small>lessons</small></b><b>${terms.length}<small>terms</small></b><b>${questions.length}<small>MCQs</small></b><b>${shorts.length}<small>short answers</small></b></div></section><div class="lesson-roadmap">${m.lessons.map((l,i)=>`<article><span>${String(i+1).padStart(2,'0')}</span><div><small>${state.completed.includes(`${mid}/${l.id}`)?'✓ COMPLETED':'LESSON'}</small><h3>${esc(l.title)}</h3><p>${esc(l.objective)}</p></div><button data-route="learn/${mid}/${l.id}">Open ↗</button></article>`).join('')}</div>`;
+    if(tab==='terms')content=`<div class="hub-section-head"><div><span>MODULE TERM BANK</span><h2>${terms.length} linked terms</h2></div><button class="green-btn" data-start-term-module="${mid}">Study as flashcards</button></div><div class="hub-term-list">${terms.map(x=>`<article><span>${esc(x.category)}</span><h3>${esc(x.term)}</h3><p><b>${esc(x.vi)}</b> · ${esc(x.definition)}</p></article>`).join('')}</div>`;
+    if(tab==='practice')content=`<div class="study-space-grid hub-paths">${[
+      ['01','Multiple-choice reasoning',`${questions.length} explained questions with option-level feedback.`,`practice/${mid}`,'yellow'],
+      ['02','Terminology recall',`${terms.length} definitions to answer without seeing options.`,`term-trainer`,'blue'],
+      ['03','Short-answer reasoning',`${shorts.length} prompts with guided model answers.`,`short-answers`,'pink'],
+      ['04','Empirical write-ups',`${writeups.length} structured interpretation tasks.`,`writeups`,'dark']
+    ].map(x=>`<article class="study-space ${x[4]}"><span>${x[0]}</span><h3>${x[1]}</h3><p>${x[2]}</p><button data-hub-launch="${x[3]}" data-module="${mid}">Open practice →</button></article>`).join('')}</div>`;
+    if(tab==='problems')content=`<div class="hub-section-head"><div><span>GUIDED PROBLEMS</span><h2>${m.lessons.length*3} worked practice paths</h2></div></div><div class="problem-route-list">${m.lessons.map(l=>`<article><div><small>${esc(m.title)}</small><h3>${esc(l.title)}</h3><p>Three graduated problems with hints, reasoning steps and final answers are embedded in this lesson.</p></div><button class="outline-btn" data-route="learn/${mid}/${l.id}">Open problems ↗</button></article>`).join('')}</div>`;
+    if(tab==='review')content=`<section class="module-review-card"><span>RETRIEVAL PLAN</span><h2>Review ${esc(m.title)}</h2><p>Move from recognition to production: terms → MCQ reasoning → short explanation → empirical write-up.</p><div class="review-sequence"><button data-hub-launch="term-trainer" data-module="${mid}">1 · Recall terms</button><button data-route="practice/${mid}">2 · Diagnose MCQs</button><button data-hub-launch="short-answers" data-module="${mid}">3 · Explain concepts</button><button data-hub-launch="writeups" data-module="${mid}">4 · Write interpretation</button></div><button class="green-btn" data-review-module="${mid}">Open full module worksheet ↗</button></section>`;
+    const body=`<div class="module-hub-layout"><aside class="module-hub-sidebar"><label>Switch module<select id="hubModule">${moduleOptions(mid,'Choose module')}</select></label><p>${esc(m.subtitle)}</p><div class="hub-mini-progress"><i><b style="width:${moduleProgress(mid)}%"></b></i><span>${moduleProgress(mid)}% lessons complete</span></div><button class="outline-btn" data-route="learn/${mid}">All lessons ↗</button></aside><div><nav class="module-hub-tabs">${tabs.map(([id,label])=>`<button class="${tab===id?'active':''}" data-route="hub/${mid}/${id}">${label}</button>`).join('')}</nav>${content}</div></div>`;
+    return shell(body,{eyebrow:'Connected study workflow',title:'Module Hub',lead:'Theory, terminology, questions and written interpretation stay connected without flattening the original Econometrics curriculum.'});
+  }
+
+  function termCards(){
+    const s=state.termCards,pool=deterministicShuffle(termsForModule(s.module),s.shuffleKey);s.index=Math.min(s.index,Math.max(0,pool.length-1));const item=pool[s.index]||pool[0];
+    if(!item)return shell('<div class="empty-state"><h2>No terms in this module.</h2></div>',{title:'Term flashcards'});
+    const mastered=pool.filter(x=>state.termMastery[x.id]==='mastered').length,status=state.termMastery[item.id]||'new';
+    return shell(`<div class="focus-toolbar"><label>Module<select id="termCardModule">${moduleOptions(s.module)}</select></label><div><strong>${s.index+1}</strong> / ${pool.length}</div><button class="outline-btn" data-term-card-shuffle>Shuffle deck</button></div><div class="focus-progress"><span>${mastered}/${pool.length} mastered</span><i><b style="width:${pool.length?mastered/pool.length*100:0}%"></b></i></div><button class="term-focus-card ${s.flipped?'flipped':''}" data-term-card-flip><span class="term-focus-front"><small>${esc(item.category)} · ${item.modules.map(id=>`M${mod(id)?.num}`).join(' · ')||'FULL COURSE'}</small><strong>${esc(item.term)}</strong><em>Click to reveal the definition</em></span><span class="term-focus-back"><small>ENGLISH DEFINITION</small><strong>${esc(item.definition)}</strong><p>${esc(item.vi)}</p><em>Click to see the term</em></span></button><div class="focus-actions"><button class="review ${status==='review'?'selected':''}" data-term-card-status="review">↻ Review</button><button data-term-card-move="-1">←</button><button data-term-card-move="1">→</button><button class="mastered ${status==='mastered'?'selected':''}" data-term-card-status="mastered">✓ Mastered</button></div>`,{eyebrow:'All glossary terms · focused retrieval',title:'Term Flashcards',lead:'One card at a time, filtered by module. Your mastery status is reflected in Progress & Analytics.'});
+  }
+
+  function termHint(item,pool){
+    const distractors=deterministicShuffle(pool.filter(x=>x.id!==item.id&&x.category===item.category),item.id).slice(0,14).map(x=>x.term);
+    return deterministicShuffle([{id:'correct',term:item.term},...distractors.map((term,i)=>({id:`d${i}`,term}))],item.id).map(x=>x.term);
+  }
+  function termTrainer(){
+    const s=state.termTrainer,pool=deterministicShuffle(termsForModule(s.module),s.shuffleKey);s.index=Math.min(s.index,Math.max(0,pool.length-1));const item=pool[s.index]||pool[0];
+    if(!item)return shell('<div class="empty-state"><h2>No terms in this module.</h2></div>',{title:'Terminology recall'});
+    const accuracy=s.attempted?Math.round(s.correctTotal/s.attempted*100):0;
+    const feedback=s.checked?`<div class="term-feedback ${s.correct?'correct':'wrong'}"><img src="${s.correct?MASCOTS.heart:MASCOTS.angry}" alt=""><div><small>${s.correct?'CORRECT':'CORRECT TERM'}</small><strong>${esc(item.term)}</strong><p>${esc(item.vi)}</p></div></div>`:'';
+    return shell(`<div class="focus-toolbar"><label>Module<select id="termTrainerModule">${moduleOptions(s.module)}</select></label><div class="trainer-score"><strong>${s.correctTotal}/${s.attempted}</strong><span>${s.attempted?`${accuracy}% correct`:'No attempt yet'}</span></div><button class="outline-btn" data-term-random>Random term</button></div><article class="term-trainer-stage"><div class="question-kicker"><span>${esc(item.category)}</span><b>${s.index+1} / ${pool.length}</b></div><h2>${esc(item.definition)}</h2>${item.vi!=='—'?`<p class="trainer-vi">Vietnamese support: ${esc(item.vi)}</p>`:''}<div class="trainer-entry"><input id="termTrainerAnswer" value="${esc(s.answer)}" placeholder="Type the exact econometrics term…" ${s.checked?'disabled':''}><button class="green-btn" data-term-check>${s.checked?'Next term →':'Check answer'}</button></div><div class="hint-controls"><button class="outline-btn" data-term-hint>Hint · show word bank</button></div><div class="term-word-bank" hidden>${termHint(item,pool).map(x=>`<button data-term-hint-value="${esc(x)}">${esc(x)}</button>`).join('')}</div>${feedback}<div class="stage-nav"><button class="outline-btn" data-term-move="-1">← Previous</button><button class="outline-btn" data-term-move="1">Skip / Next →</button></div></article>`,{eyebrow:'Free-text trainer · no options first',title:'Name the econometric concept',lead:'Capitalization, punctuation, parentheses and accepted acronyms are normalized before checking.'});
+  }
+
+  function shortAnswers(){
+    const s=state.shortTrainer,pool=shortAnswerBank().filter(x=>!s.module||x.module===s.module);s.index=Math.min(s.index,Math.max(0,pool.length-1));const item=pool[s.index]||pool[0],count=wordCount(s.answer);
+    if(!item)return shell('<div class="empty-state"><h2>No short-answer prompts in this module.</h2></div>',{title:'Short answers'});
+    return shell(`<div class="focus-toolbar"><label>Module<select id="shortModule">${moduleOptions(s.module)}</select></label><div><strong>${s.index+1}</strong> / ${pool.length}</div><button class="outline-btn" data-short-random>Random question</button></div><article class="written-stage"><div class="question-kicker"><span>MODULE ${mod(item.module)?.num} · ${esc(item.title)}</span><b>TARGET ≤ 80 WORDS</b></div><h2>${esc(item.prompt)}</h2><label><span>Your answer</span><textarea id="shortAnswerInput" rows="7" placeholder="State the rule, explain the mechanism, then answer the exact question…">${esc(s.answer)}</textarea></label><div class="written-actions"><span id="shortWordCount" class="${count>80?'over':''}">${count} / 80 words</span><button class="green-btn" data-short-reveal>${s.revealed?'Hide guided answer':'Reveal guided answer'}</button></div><div class="guided-answer" ${s.revealed?'':'hidden'}><img src="${MASCOTS.heart}" alt=""><div><small>GUIDED ANSWER</small><p>${esc(item.answer)}</p>${item.points.length?`<b>A strong answer should include:</b><ul>${item.points.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<button class="outline-btn" data-route="learn/${item.module}/${item.lesson}">Review linked theory ↗</button></div></div><div class="stage-nav"><button class="outline-btn" data-short-move="-1">← Previous</button><button class="outline-btn" data-short-move="1">Next →</button></div></article>`,{eyebrow:`${shortAnswerBank().length} guided prompts`,title:'Short-answer Trainer',lead:'Write first. The model answer stays hidden until you choose to compare your reasoning.'});
+  }
+
+  function writeups(){
+    const s=state.writeupTrainer,pool=writeupBank().filter(x=>!s.module||x.module===s.module);s.index=Math.min(s.index,Math.max(0,pool.length-1));const item=pool[s.index]||pool[0],count=wordCount(s.answer);
+    if(!item)return shell('<div class="empty-state"><h2>No write-up prompts in this module.</h2></div>',{title:'Empirical write-ups'});
+    return shell(`<div class="focus-toolbar"><label>Module<select id="writeupModule">${moduleOptions(s.module)}</select></label><div><strong>${s.index+1}</strong> / ${pool.length}</div><button class="outline-btn" data-writeup-random>Random prompt</button></div><article class="written-stage writeup-stage"><div class="question-kicker"><span>MODULE ${mod(item.module)?.num} · EMPIRICAL WRITING</span><b>TARGET 120–180 WORDS</b></div><h2>${esc(item.prompt)}</h2><label><span>Your structured response</span><textarea id="writeupAnswerInput" rows="12" placeholder="Concept → mechanism → application/interpretation → limitation or diagnostic caution…">${esc(s.answer)}</textarea></label><div class="written-actions"><span id="writeupWordCount" class="${count&& (count<120||count>180)?'over':''}">${count} words · target 120–180</span><button class="green-btn" data-writeup-reveal>${s.revealed?'Hide structure':'Reveal suggested structure'}</button></div><div class="guided-answer outline-answer" ${s.revealed?'':'hidden'}><img src="${MASCOTS.flower}" alt=""><div><small>CORE POSITION</small><h3>${esc(item.thesis)}</h3><ol>${item.outline.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>${item.mistakes.length?`<div class="writeup-traps"><b>Avoid:</b><ul>${item.mistakes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}<button class="outline-btn" data-route="learn/${item.module}/${item.lesson}">Open full lesson ↗</button></div></div><div class="stage-nav"><button class="outline-btn" data-writeup-move="-1">← Previous</button><button class="outline-btn" data-writeup-move="1">Next →</button></div></article>`,{eyebrow:`${writeupBank().length} course-linked prompts`,title:'Econometric Write-up Bank',lead:'A subject-appropriate replacement for a generic essay bank: interpretation, assumptions, diagnostics and empirical justification.'});
+  }
+
+  function reviewWorksheet(type,mid){
+    if(type==='terms'){
+      const rows=deterministicShuffle(termsForModule(mid),`review-${mid}-${state.reviewPrefs.shuffle||0}`).slice(0,30);
+      return `<div class="worksheet-list">${rows.map((x,i)=>`<article class="worksheet-item" data-review-term-card data-term-id="${x.id}"><span>${String(i+1).padStart(2,'0')}</span><div><small>${esc(x.category)}</small><h3>${esc(x.definition)}</h3><div class="worksheet-entry"><input data-review-term-input placeholder="Type the term…"><button class="outline-btn" data-review-term-check>Check</button></div><div class="worksheet-feedback" hidden></div></div></article>`).join('')}</div>`;
+    }
+    if(type==='short'){
+      const rows=deterministicShuffle(shortAnswerBank().filter(x=>!mid||x.module===mid),`short-${mid}-${state.reviewPrefs.shuffle||0}`).slice(0,15);
+      return `<div class="worksheet-list">${rows.map((x,i)=>`<article class="worksheet-item"><span>${String(i+1).padStart(2,'0')}</span><div><small>MODULE ${mod(x.module)?.num} · SHORT ANSWER</small><h3>${esc(x.prompt)}</h3><textarea rows="5" placeholder="Write before revealing the guide…"></textarea><button class="outline-btn" data-worksheet-reveal>Reveal guided answer</button><div class="worksheet-feedback" hidden><b>Guided answer</b><p>${esc(x.answer)}</p></div></div></article>`).join('')}</div>`;
+    }
+    if(type==='writeups'){
+      const rows=deterministicShuffle(writeupBank().filter(x=>!mid||x.module===mid),`write-${mid}-${state.reviewPrefs.shuffle||0}`).slice(0,10);
+      return `<div class="worksheet-list">${rows.map((x,i)=>`<article class="worksheet-item"><span>${String(i+1).padStart(2,'0')}</span><div><small>MODULE ${mod(x.module)?.num} · WRITE-UP</small><h3>${esc(x.prompt)}</h3><button class="outline-btn" data-worksheet-reveal>Reveal structure</button><div class="worksheet-feedback" hidden><b>${esc(x.thesis)}</b><ol>${x.outline.map(y=>`<li>${esc(y)}</li>`).join('')}</ol></div></div></article>`).join('')}</div>`;
+    }
+    const rows=deterministicShuffle(D.questions.filter(q=>!mid||q.module===mid),`mcq-${mid}-${state.reviewPrefs.shuffle||0}`).slice(0,20);
+    return `<div class="worksheet-list">${rows.map((q,i)=>`<article class="worksheet-item review-mcq" data-review-mcq="${q.id}"><span>${String(i+1).padStart(2,'0')}</span><div><small>${q.id} · ${esc(q.difficulty)}</small><h3>${esc(q.question)}</h3><div class="worksheet-options">${q.options.map((x,j)=>`<button data-review-mcq-answer="${j}"><b>${String.fromCharCode(65+j)}</b>${esc(x)}</button>`).join('')}</div><div class="worksheet-feedback" hidden></div></div></article>`).join('')}</div>`;
+  }
+
+  function reviewHub(){
+    const s=state.reviewPrefs,type=s.type||'overview',mid=s.module||'';
+    const counts={terms:termsForModule(mid).length,mcq:D.questions.filter(q=>!mid||q.module===mid).length,short:shortAnswerBank().filter(x=>!mid||x.module===mid).length,writeups:writeupBank().filter(x=>!mid||x.module===mid).length};
+    const controls=`<section class="review-controls"><label><span>Review scope</span><select id="reviewModule">${moduleOptions(mid,'All modules')}</select></label><nav>${[['overview','Overview'],['terms','Terminology'],['mcq','MCQ worksheet'],['short','Short answers'],['writeups','Write-ups']].map(([id,label])=>`<button class="${type===id?'active':''}" data-review-type="${id}">${label}</button>`).join('')}</nav></section>`;
+    const overview=`<div class="review-mode-grid">${[
+      ['terms','Terminology recall',counts.terms,'Type the concept without seeing options.','yellow'],
+      ['mcq','MCQ worksheet',counts.mcq,'Work through a visible set with immediate reasoning.','blue'],
+      ['short','Short answers',counts.short,'Explain the mechanism before revealing the guide.','pink'],
+      ['writeups','Empirical write-ups',counts.writeups,'Structure full interpretations and diagnostic conclusions.','dark']
+    ].map(x=>`<button class="review-mode-card ${x[4]}" data-review-type="${x[0]}"><span>${x[2]}</span><h3>${x[1]}</h3><p>${x[3]}</p><b>Open worksheet →</b></button>`).join('')}</div>`;
+    const body=type==='overview'?overview:`<div class="worksheet-head"><div><span>${mid?`MODULE ${mod(mid)?.num}`:'FULL COURSE'} · ${type.toUpperCase()}</span><h2>${counts[type]||0} available · focused worksheet shown below</h2></div><button class="outline-btn" data-review-reshuffle>Reshuffle worksheet</button></div>${reviewWorksheet(type,mid)}`;
+    return shell(`${controls}${body}`,{eyebrow:'No timer · choose exactly what to practise',title:'Review Hub',lead:'A focused workspace for retrieval and written reasoning. Use the timed mixed exam only after this stage feels stable.'});
+  }
+
+  function donatePage(){
+    const image=window.EM_EMBEDDED_ASSETS?.donate||MASCOTS.heart;
+    return shell(`<section class="donate-shell"><div class="donate-copy"><span>SUPPORT THE PROJECT</span><h2>Một chút động lực cho người làm web.</h2><p>Nếu Econometrics Mastery giúp việc học công thức, suy luận và diễn giải của bạn dễ dàng hơn, bạn có thể quét mã trong ảnh để ủng hộ.</p><div class="donate-thank-you"><img src="${MASCOTS.heart}" alt=""><div><small>SPECIAL THANKS</small><strong>Cảm ơn Phước Nguyên đã gợi ý</strong></div></div></div><figure class="donate-image-card"><img src="${image}" alt="Ảnh donate kèm mã QR được nhúng trực tiếp trong website"><figcaption>Quét mã QR trong ảnh để donate</figcaption></figure></section>`,{eyebrow:'Econometrics Mastery · Donate',title:'Donate',lead:'Cảm ơn bạn đã học cùng những chú ruồi nhỏ.'});
+  }
+
   function settings(){ return shell(`<div class="settings-card"><label><span>Text size</span><input id="fontScale" type="range" min="90" max="115" value="${state.settings.fontScale}"><b id="fontScaleVal">${state.settings.fontScale}%</b></label><label class="switch-row"><span><b>Compact cards</b><small>Reduce vertical spacing in lists</small></span><input id="compactToggle" type="checkbox" ${state.settings.compact?'checked':''}></label><hr><button class="danger-btn" id="resetData">Reset all local progress</button><p class="muted">Reset clears attempts, lesson completion, mistakes, saved items, flashcards and annotations from this browser only.</p></div>`,{eyebrow:'Local preferences',title:'Settings'}); }
-  function menu(){ return shell(`<div class="menu-grid">${[['Learn','learn'],['Practice','practice'],['Question Bank','bank'],['Mistake Notebook','mistakes'],['Notes & Highlights','notes'],['Flashcards','flashcards'],['Formula Sheet','formulas'],['Calculators','calculators'],['Empirical Lab','lab'],['Exam Mode','exam'],['Progress & Analytics','progress'],['Glossary','glossary'],['Saved','saved'],['Sources','sources'],['Settings','settings']].map(x=>`<button data-route="${x[1]}">${x[0]} <span>↗</span></button>`).join('')}</div>`,{eyebrow:'Econometrics Mastery',title:'All tools'}); }
+  function menu(){ return shell(`<div class="menu-grid">${[['Module Hub','hub/m1/overview'],['Learn','learn'],['Practice','practice'],['Review Hub','review'],['Mixed Exam','mixed-exam'],['Question Bank','bank'],['Term Bank','glossary'],['Term Flashcards','term-cards'],['Free-text Recall','term-trainer'],['Short Answers','short-answers'],['Write-up Bank','writeups'],['Mistake Notebook','mistakes'],['Notes & Highlights','notes'],['SRS Flashcards','flashcards'],['Formula Sheet','formulas'],['Calculators','calculators'],['Empirical Lab','lab'],['MCQ Exam','exam'],['Progress & Analytics','progress'],['Saved','saved'],['Donate','donate'],['Sources','sources'],['Settings','settings']].map(x=>`<button data-route="${x[1]}">${x[0]} <span>↗</span></button>`).join('')}</div>`,{eyebrow:'Econometrics Mastery',title:'All tools'}); }
   function notFound(){ return shell(`<div class="empty-state"><h2>Page not found.</h2><button class="green-btn" data-route="dashboard">Go home</button></div>`,{eyebrow:'404',title:'Not found'}); }
 
   function render({preserveScroll=false}={}){
@@ -597,9 +862,17 @@ const App = (() => {
     else if(r==='calculators')html=calculators();
     else if(r==='lab')html=lab();
     else if(r==='exam')html=state.exam?.result&&!state.exam?.active?examResult():examHome();
+    else if(r==='mixed-exam')html=state.mixedExam?.submitted?mixedExamResult():state.mixedExam?.active?mixedExamPaper():mixedExamSetup();
     else if(r==='progress')html=progress();
     else if(r==='glossary')html=glossary();
+    else if(r==='hub')html=moduleHub(p);
+    else if(r==='term-cards')html=termCards();
+    else if(r==='term-trainer')html=termTrainer();
+    else if(r==='short-answers')html=shortAnswers();
+    else if(r==='writeups')html=writeups();
+    else if(r==='review')html=reviewHub();
     else if(r==='saved')html=saved();
+    else if(r==='donate')html=donatePage();
     else if(r==='sources')html=sources();
     else if(r==='settings')html=settings();
     else if(r==='menu')html=menu(); else html=notFound();
@@ -621,6 +894,13 @@ const App = (() => {
     }
     if(r==='calculators')renderCalc('olsslope');
     if(r==='exam'&&state.exam?.active)startTimer();
+    if(r==='mixed-exam'&&state.mixedExam?.active){if(mixedSeconds()<=0)submitMixedExam(true);else startMixedTimer();}
+    if(r==='glossary'){
+      renderGlossaryResults();
+      document.getElementById('termSearch')?.addEventListener('input',renderGlossaryResults);
+      document.getElementById('termModule')?.addEventListener('change',renderGlossaryResults);
+      document.getElementById('termCategory')?.addEventListener('change',renderGlossaryResults);
+    }
     if(r==='learn'&&annotationFocusId){
       const id=annotationFocusId;annotationFocusId=null;
       setTimeout(()=>{
@@ -683,6 +963,47 @@ const App = (() => {
     if(e.target.matches('[data-delete-flash]')){state.flashcards=state.flashcards.filter(x=>x.id!==e.target.dataset.deleteFlash);persist();render();return;}
     if(e.target.matches('[data-calc-tab]')){document.querySelectorAll('[data-calc-tab]').forEach(b=>b.classList.remove('active'));e.target.classList.add('active');renderCalc(e.target.dataset.calcTab);return;}
     if(e.target.id==='calcRun'){runCalc();return;}
+    const termStatus=e.target.closest('[data-term-status]');if(termStatus){
+      const id=termStatus.dataset.termStatus,current=state.termMastery[id]||'new',next=current==='new'?'review':current==='review'?'mastered':'new';state.termMastery[id]=next;persist();render({preserveScroll:true});showToast(next==='mastered'?'Term mastered':next==='review'?'Added to review':'Reset to new');return;
+    }
+    const hubLaunch=e.target.closest('[data-hub-launch]');if(hubLaunch){
+      const target=hubLaunch.dataset.hubLaunch,mid=hubLaunch.dataset.module;
+      if(target.startsWith('practice/')){nav(target);return;}
+      if(target==='term-trainer'){state.termTrainer={...state.termTrainer,module:mid,index:0,answer:'',checked:false};}
+      if(target==='short-answers'){state.shortTrainer={...state.shortTrainer,module:mid,index:0,answer:'',revealed:false};}
+      if(target==='writeups'){state.writeupTrainer={...state.writeupTrainer,module:mid,index:0,answer:'',revealed:false};}
+      persist();nav(target);return;
+    }
+    const startTerm=e.target.closest('[data-start-term-module]');if(startTerm){state.termCards={...state.termCards,module:startTerm.dataset.startTermModule,index:0,flipped:false};persist();nav('term-cards');return;}
+    const reviewModule=e.target.closest('[data-review-module]');if(reviewModule){state.reviewPrefs={...state.reviewPrefs,module:reviewModule.dataset.reviewModule,type:'overview'};persist();nav('review');return;}
+    if(e.target.closest('[data-term-card-flip]')){state.termCards.flipped=!state.termCards.flipped;persist();render();return;}
+    if(e.target.closest('[data-term-card-shuffle]')){state.termCards.shuffleKey=Date.now();state.termCards.index=0;state.termCards.flipped=false;persist();render();return;}
+    const termCardMove=e.target.closest('[data-term-card-move]');if(termCardMove){const pool=termsForModule(state.termCards.module);state.termCards.index=(state.termCards.index+Number(termCardMove.dataset.termCardMove)+pool.length)%pool.length;state.termCards.flipped=false;persist();render();return;}
+    const termCardStatus=e.target.closest('[data-term-card-status]');if(termCardStatus){const pool=deterministicShuffle(termsForModule(state.termCards.module),state.termCards.shuffleKey),item=pool[state.termCards.index];if(item){state.termMastery[item.id]=termCardStatus.dataset.termCardStatus;state.termCards.flipped=false;state.termCards.index=(state.termCards.index+1)%pool.length;persist();render();}return;}
+    if(e.target.closest('[data-term-random]')){const pool=termsForModule(state.termTrainer.module);state.termTrainer.index=Math.floor(Math.random()*pool.length);state.termTrainer.answer='';state.termTrainer.checked=false;persist();render();return;}
+    const termMove=e.target.closest('[data-term-move]');if(termMove){const pool=termsForModule(state.termTrainer.module);state.termTrainer.index=(state.termTrainer.index+Number(termMove.dataset.termMove)+pool.length)%pool.length;state.termTrainer.answer='';state.termTrainer.checked=false;persist();render();return;}
+    if(e.target.closest('[data-term-hint]')){const bank=document.querySelector('.term-word-bank');if(bank){bank.hidden=!bank.hidden;e.target.closest('[data-term-hint]').textContent=bank.hidden?'Hint · show word bank':'Hide word bank';}return;}
+    const hintValue=e.target.closest('[data-term-hint-value]');if(hintValue){const input=document.getElementById('termTrainerAnswer');if(input&&!input.disabled){input.value=hintValue.dataset.termHintValue;state.termTrainer.answer=input.value;persist();input.focus();}return;}
+    if(e.target.closest('[data-term-check]')){
+      const s=state.termTrainer,pool=deterministicShuffle(termsForModule(s.module),s.shuffleKey),item=pool[s.index];
+      if(s.checked){s.index=(s.index+1)%pool.length;s.answer='';s.checked=false;persist();render();return;}
+      s.answer=document.getElementById('termTrainerAnswer')?.value||'';if(!s.answer.trim()){showToast('Type a term before checking.');return;}
+      s.checked=true;s.correct=acceptedTermAnswer(s.answer,item);s.attempted++;if(s.correct){s.correctTotal++;state.termMastery[item.id]='mastered';}else if(state.termMastery[item.id]!=='mastered')state.termMastery[item.id]='review';persist();render();return;
+    }
+    if(e.target.closest('[data-short-random]')){const pool=shortAnswerBank().filter(x=>!state.shortTrainer.module||x.module===state.shortTrainer.module);state.shortTrainer.index=Math.floor(Math.random()*pool.length);state.shortTrainer.answer='';state.shortTrainer.revealed=false;persist();render();return;}
+    const shortMove=e.target.closest('[data-short-move]');if(shortMove){const pool=shortAnswerBank().filter(x=>!state.shortTrainer.module||x.module===state.shortTrainer.module);state.shortTrainer.index=(state.shortTrainer.index+Number(shortMove.dataset.shortMove)+pool.length)%pool.length;state.shortTrainer.answer='';state.shortTrainer.revealed=false;persist();render();return;}
+    if(e.target.closest('[data-short-reveal]')){state.shortTrainer.revealed=!state.shortTrainer.revealed;persist();render({preserveScroll:true});return;}
+    if(e.target.closest('[data-writeup-random]')){const pool=writeupBank().filter(x=>!state.writeupTrainer.module||x.module===state.writeupTrainer.module);state.writeupTrainer.index=Math.floor(Math.random()*pool.length);state.writeupTrainer.answer='';state.writeupTrainer.revealed=false;persist();render();return;}
+    const writeupMove=e.target.closest('[data-writeup-move]');if(writeupMove){const pool=writeupBank().filter(x=>!state.writeupTrainer.module||x.module===state.writeupTrainer.module);state.writeupTrainer.index=(state.writeupTrainer.index+Number(writeupMove.dataset.writeupMove)+pool.length)%pool.length;state.writeupTrainer.answer='';state.writeupTrainer.revealed=false;persist();render();return;}
+    if(e.target.closest('[data-writeup-reveal]')){state.writeupTrainer.revealed=!state.writeupTrainer.revealed;persist();render({preserveScroll:true});return;}
+    const reviewType=e.target.closest('[data-review-type]');if(reviewType){state.reviewPrefs.type=reviewType.dataset.reviewType;persist();render();return;}
+    if(e.target.closest('[data-review-reshuffle]')){state.reviewPrefs.shuffle=Date.now();persist();render();return;}
+    const reviewTerm=e.target.closest('[data-review-term-check]');if(reviewTerm){const card=reviewTerm.closest('[data-review-term-card]'),item=termCatalog().find(x=>x.id===card?.dataset.termId),input=card?.querySelector('[data-review-term-input]'),feedback=card?.querySelector('.worksheet-feedback');if(item&&input&&feedback){const correct=acceptedTermAnswer(input.value,item);feedback.hidden=false;feedback.className=`worksheet-feedback ${correct?'correct':'wrong'}`;feedback.innerHTML=`<b>${correct?'Correct':'Correct term: '+esc(item.term)}</b><p>${esc(item.vi)}</p>`;state.termMastery[item.id]=correct?'mastered':'review';persist();}return;}
+    const reviewMcq=e.target.closest('[data-review-mcq-answer]');if(reviewMcq){const card=reviewMcq.closest('[data-review-mcq]'),q=qById(card?.dataset.reviewMcq),choice=Number(reviewMcq.dataset.reviewMcqAnswer),feedback=card?.querySelector('.worksheet-feedback');card?.querySelectorAll('[data-review-mcq-answer]').forEach((b,i)=>{b.disabled=true;b.classList.toggle('correct',i===q.answer);b.classList.toggle('wrong',i===choice&&i!==q.answer);});if(feedback){feedback.hidden=false;feedback.innerHTML=`<b>${choice===q.answer?'Correct':'Correct answer: '+String.fromCharCode(65+q.answer)}</b><p>${esc(q.explanation)}</p>`;}state.attempts.push({qid:q.id,choice,correct:choice===q.answer,at:Date.now(),source:'review-hub'});persist();return;}
+    const worksheetReveal=e.target.closest('[data-worksheet-reveal]');if(worksheetReveal){const feedback=worksheetReveal.parentElement.querySelector('.worksheet-feedback');if(feedback){feedback.hidden=!feedback.hidden;worksheetReveal.textContent=feedback.hidden?'Reveal guided answer':'Hide guided answer';}return;}
+    if(e.target.closest('[data-start-mixed]')){beginMixedExam(document.getElementById('mixedScope')?.value||'core');return;}
+    if(e.target.closest('[data-submit-mixed]')){submitMixedExam(false);return;}
+    if(e.target.closest('[data-new-mixed]')){state.mixedExam=null;persist();render();return;}
     if(e.target.matches('[data-start-exam]')){beginExam(e.target.dataset.startExam||'core');return;}
     if(e.target.id==='submitExam'){submitExam();return;}
     if(e.target.id==='newExam'){state.exam=null;render();return;}
@@ -725,11 +1046,19 @@ const App = (() => {
     if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openGlobalSearch();}
     else if(e.key==='/'&&!/input|textarea|select/i.test(document.activeElement?.tagName||'')){e.preventDefault();openGlobalSearch();}
     else if(e.key==='Escape')closeGlobalSearch();
+    else if(e.key==='Enter'&&e.target.id==='termTrainerAnswer'){e.preventDefault();document.querySelector('[data-term-check]')?.click();}
   });
   document.getElementById('practiceModule');
   document.addEventListener('change',e=>{
     if(e.target.id==='practiceModule'){const v=e.target.value;const mode=document.getElementById('practiceMode')?.value||'mixed';state.practice.pool=[];nav(v?`practice/${v}/mode/${mode}`:`practice/mode/${mode}`);}
     if(e.target.id==='practiceMode'){const mode=e.target.value;const v=document.getElementById('practiceModule')?.value||'';state.practice.pool=[];nav(v?`practice/${v}/mode/${mode}`:`practice/mode/${mode}`);}
+    if(e.target.id==='hubModule'){nav(`hub/${e.target.value}/overview`);}
+    if(e.target.id==='termCardModule'){state.termCards={...state.termCards,module:e.target.value,index:0,flipped:false};persist();render();}
+    if(e.target.id==='termTrainerModule'){state.termTrainer={...state.termTrainer,module:e.target.value,index:0,answer:'',checked:false};persist();render();}
+    if(e.target.id==='shortModule'){state.shortTrainer={...state.shortTrainer,module:e.target.value,index:0,answer:'',revealed:false};persist();render();}
+    if(e.target.id==='writeupModule'){state.writeupTrainer={...state.writeupTrainer,module:e.target.value,index:0,answer:'',revealed:false};persist();render();}
+    if(e.target.id==='reviewModule'){state.reviewPrefs={...state.reviewPrefs,module:e.target.value};persist();render();}
+    if(e.target.matches('[data-mixed-mcq]')&&state.mixedExam?.active){state.mixedExam.answers.mcq[e.target.dataset.mixedMcq]=Number(e.target.value);persist();}
     if(e.target.id==='fontScale'){state.settings.fontScale=Number(e.target.value);document.getElementById('fontScaleVal').textContent=e.target.value+'%';persist();document.documentElement.style.fontSize=e.target.value+'%';}
     if(e.target.id==='compactToggle'){state.settings.compact=e.target.checked;persist();document.body.classList.toggle('compact',e.target.checked);}
   });
@@ -738,6 +1067,12 @@ const App = (() => {
     if(e.target.id==='globalSearchInput')renderGlobalSearchResults(e.target.value);
     if(e.target.id==='formulaSearch'){const t=e.target.value.toLowerCase();document.querySelectorAll('.formula-card').forEach(c=>c.hidden=!c.dataset.search.includes(t));}
     if(e.target.id==='noteSearch')renderNotesResults();
+    if(e.target.id==='termTrainerAnswer'){state.termTrainer.answer=e.target.value;persist();}
+    if(e.target.id==='shortAnswerInput'){state.shortTrainer.answer=e.target.value;const count=wordCount(e.target.value),node=document.getElementById('shortWordCount');if(node){node.textContent=`${count} / 80 words`;node.classList.toggle('over',count>80);}persist();}
+    if(e.target.id==='writeupAnswerInput'){state.writeupTrainer.answer=e.target.value;const count=wordCount(e.target.value),node=document.getElementById('writeupWordCount');if(node){node.textContent=`${count} words · target 120–180`;node.classList.toggle('over',!!count&&(count<120||count>180));}persist();}
+    if(e.target.matches('[data-mixed-term]')&&state.mixedExam?.active){state.mixedExam.answers.terms[Number(e.target.dataset.mixedTerm)]=e.target.value;persist();}
+    if(e.target.matches('[data-mixed-short]')&&state.mixedExam?.active){state.mixedExam.answers.shorts[Number(e.target.dataset.mixedShort)]=e.target.value;persist();}
+    if(e.target.id==='mixedWriteup'&&state.mixedExam?.active){state.mixedExam.answers.writeup=e.target.value;persist();}
   });
   document.getElementById('noteForm')?.addEventListener('submit',e=>{e.preventDefault();saveNoteFromDialog();});
   noteDialog?.addEventListener('click',e=>{if(e.target===noteDialog)closeNoteDialog();});

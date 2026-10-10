@@ -1,32 +1,22 @@
-# Build Notes — Econometrics Mastery v2.0
+# Build Notes — Econometrics Mastery v4.0
 
-Date: 2026-08-31
+This is a static, dependency-free website. There is no compile or bundling step.
 
-## Why v2 was rebuilt
+## Design decisions
 
-A second source audit found three material gaps in the first GitHub-ready build:
+- The Econometrics curriculum, source hierarchy, question bank and original study tools remain authoritative.
+- ESP3 contributes the connected Module/Review spaces, focused recall modes, mixed assessment, warmer visual system, mascot reactions and Donate surface.
+- Formula reliability takes priority over decorative layout. The v4 renderer maps all 28 formula names to semantic native MathML and keeps raw notation only inside an optional copy panel.
+- All required raster/vector artwork is directly embedded in JavaScript as `data:` URLs.
+- Written work is never assigned a misleading automatic semantic score. Model guidance and explicit rubrics support honest partial marking.
 
-1. `dummy_S.pdf` was uploaded after the first build and therefore was not fully represented.
-2. The Chapter 5 autocorrelation lesson was too compressed relative to the supplied lecture slides.
-3. The newly uploaded Wooldridge 5e test bank extends through Chapter 19, while the original site had only enough explicit theory to support the core course plus selected extensions.
+## Release command
 
-## Changes made
+```bash
+node --check app.js
+node --check embedded-assets.js
+node qa.js
+node qa-v4.js
+```
 
-- Added 46 lessons and four extended modules, bringing the curriculum from **58 → 104 lessons**.
-- Added source-specific dummy-variable lessons and restored missing diagnostic detail.
-- Added theory for asymptotics/LM, scaling/prediction, specification/data problems, time series, panels, IV/2SLS/simultaneous equations and limited-dependent-variable models.
-- Parsed and integrated **380/380** supplied Wooldridge test-bank questions.
-- Added source, chapter, question number, difficulty, Bloom level, topic/A-Head and source-key metadata to test-bank items.
-- Added answer/option explanations and exact review links for every test-bank question.
-- Added source-audit notices for questionable bank keys/wording and corrected five clear answer-key conflicts.
-- Added Practice filters for Core, Test Bank, source, chapter, difficulty and Bloom level.
-- Added separate Core Course vs Test-Bank exam entry points.
-- Registered the added dummy lecture, Stock & Watson 3e and FTU project/research-method guide in the source list.
-- Updated HTML script order so extensions load before the app starts.
-
-## Compatibility
-
-- Static HTML/CSS/JS only.
-- No build system required.
-- Existing localStorage keys remain compatible with the original build.
-- Original 600 question IDs are unchanged; test-bank IDs use `TBxx-yy`.
+All four commands must pass before packaging.
